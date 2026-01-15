@@ -6,6 +6,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
+/**
+ * Configuration class to set up asynchronous method execution.
+ * Defines a custom thread pool executor for handling @Async methods.
+ * This custom thread pool will be used instead of the default one provided by Spring.
+ * If want to have multiple executors, define them as beans and use @Async("beanName") to specify which one to use.
+ * As shown in com.applicationPOC.config.ConditionalConfig.java.
+ */
 @Configuration
 public class AsyncConfig implements AsyncConfigurer {
 

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Step 2</title>
+    <meta charset="UTF-8"/>
+</head>
+<body>
+<h1>User registration - Step 2 (Review)</h1>
+
+<p>Name: <strong th:text="${userForm} != null ? ${userForm.name} : ' '">Name</strong></p>
+<p>Email: <strong th:text="${userForm} != null ? ${userForm.email} : ' '">Email</strong></p>
+
+<form th:action="@{/user/complete}" method="post">
+    <!-- disable confirm if userForm is null -->
+    <button type="submit"
+            th:disabled="${userForm} == null">Confirm</button>
+</form>
+
+<!-- Use only the model attribute, no #session -->
+<p>
+    Session user present:
+    <span th:text="${userForm} != null ? 'yes' : 'no'">no</span>
+</p>
+</body>
+</html>

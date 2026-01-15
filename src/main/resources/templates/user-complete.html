@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Complete</title>
+</head>
+<body>
+<h1>Registration Complete</h1>
+
+<p th:if="${completed}">Thank you,
+    <span th:text="${userForm != null} ? ${userForm.name} : 'User'">User</span>!
+</p>
+
+<p>Email:
+    <span th:text="${userForm != null} ? ${userForm.email} : 'email'">email</span>
+</p>
+
+<p>Get user at:
+    <span th:text="${uri}">uri</span>	
+</p>
+
+<p>Session user after complete:
+    <span th:text="${session.userForm != null} ? ${session.userForm.name} : 'cleared'">status</span>
+</p>
+
+<p><a th:href="@{/user/step1}">Start again</a></p>
+</body>
+</html>

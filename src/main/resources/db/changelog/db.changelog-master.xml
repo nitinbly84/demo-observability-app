@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="1-create-category-product" author="Nitin">
+        <createTable tableName="categories">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(100)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="products">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(200)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price" type="DECIMAL(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="in_stock" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category_id" type="BIGINT">
+                <constraints nullable="false" foreignKeyName="fk_product_category"
+                             referencedTableName="categories"
+                             referencedColumnNames="id"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="2-insert-sample-data" author="Nitin">
+        <insert tableName="categories">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="Electronics"/>
+        </insert>
+        <insert tableName="categories">
+            <column name="id" valueNumeric="2"/>
+            <column name="name" value="Books"/>
+        </insert>
+
+        <insert tableName="products">
+            <column name="name" value="Laptop"/>
+            <column name="price" valueNumeric="1200.00"/>
+            <column name="in_stock" valueBoolean="true"/>
+            <column name="category_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="products">
+            <column name="name" value="Headphones"/>
+            <column name="price" valueNumeric="199.99"/>
+            <column name="in_stock" valueBoolean="false"/>
+            <column name="category_id" valueNumeric="1"/>
+        </insert>
+        <insert tableName="products">
+            <column name="name" value="Spring Boot in Action"/>
+            <column name="price" valueNumeric="39.99"/>
+            <column name="in_stock" valueBoolean="true"/>
+            <column name="category_id" valueNumeric="2"/>
+        </insert>
+    </changeSet>
+    
+    <!-- Create users table -->
+    <changeSet id="20260113-create-users-table" author="you">
+        <createTable tableName="users">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(50)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Insert sample users with BCrypt hashes -->
+    <changeSet id="20260113-insert-sample-users" author="you">
+        <insert tableName="users">
+            <column name="username" value="user"/>
+            <column name="password" value="$2a$10$mP5CyLe/cIqWhWPLsyNIJOsOEpdQaxOJa3BH4N.ISgHgPr8uHlMS."/>
+            <column name="role" value="USER"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$10$mP5CyLe/cIqWhWPLsyNIJOsOEpdQaxOJa3BH4N.ISgHgPr8uHlMS."/>
+            <column name="role" value="ADMIN"/>
+            <column name="enabled" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

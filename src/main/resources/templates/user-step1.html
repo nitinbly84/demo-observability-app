@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>User Step 1</title>
+</head>
+<body>
+<h1>User registration - Step 1</h1>
+
+<form th:action="@{/user/step1}" th:object="${userForm}" method="post">
+    <div>
+        <label for="name">Name:</label>
+        <input id="name"
+               type="text"
+               th:field="*{name}"/>
+    </div>
+    <div>
+        <label for="email">Email:</label>
+        <input id="email"
+               type="email"
+               th:field="*{email}"/>
+    </div>
+    <div>
+        <!-- disabled on first render if name or email is null/empty -->
+        <button id="nextBtn"
+                type="submit"
+                th:disabled="*{name} == null or *{name} == '' or *{email} == null or *{email} == ''">
+            Next
+        </button>
+    </div>
+</form>
+
+<script>
+    // Enable/disable Next button live as user types
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function updateButton() {
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        nextBtn.disabled = (name.length === 0 || email.length === 0);
+    }
+
+    // initial state
+    updateButton();
+    // update on every change
+    nameInput.addEventListener('input', updateButton);
+	emailInput.addEventListener('input', updateButton);
+</script>
+
+<p>Session debug: name =
+    <span th:text="${session.userForm != null} ? ${session.userForm.name} : 'N/A'">N/A</span>
+</p>
+</body>
+</html>
