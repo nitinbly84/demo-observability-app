@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,6 +35,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.applicationPOC.aspects.DemoAspectService;
 import com.applicationPOC.event.UserCreatedEvent;
+import com.applicationPOC.model.First;
+import com.applicationPOC.model.FirstAutowiredBean;
+import com.applicationPOC.model.MultiAutowiredBean;
 import com.applicationPOC.model.Scope1;
 import com.applicationPOC.model.UserDto;
 import com.applicationPOC.service.DemoService;
@@ -62,12 +66,26 @@ public class PublicController {
 	@Autowired
 	private DemoAspectService demoAspectService;
 
+	@Autowired
+	private FirstAutowiredBean first;
+
+	@Autowired
+	@Qualifier("Multi")
+	private MultiAutowiredBean multi;
+
+	@Autowired
+	@Qualifier("ConditionalFirst")
+	private First conditionalFirst;
+
 	//	@Autowired
 	//	private Scope1 scope1;
 
 	// If we use below number then it will remain same after every start of the server.
 	@Value("#{T(java.lang.Math).random() * 100}") // SpEL
 	private int randomNumber;
+
+	@Value("${demo.name:Default Name}") // Injecting value from application.properties with default value
+	private String name;
 
 	public PublicController(DemoService demoService, ApplicationEventPublisher publisher) {
 		this.demoService = demoService;
@@ -113,6 +131,16 @@ public class PublicController {
 		return "Welcome, " + username;
 	}
 
+	@GetMapping("/default-user")
+	public UserDto getDefaultUser() {
+		UserDto user = new UserDto();
+		user.setName("John Doe");
+		user.setEmail("default@email.com");
+		user.setPassword("defaultPassword");
+		user.setRole("USER");
+		return user;
+	}		
+
 	// @RequestBody + @ResponseStatus
 	@PostMapping("/users")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -151,12 +179,12 @@ public class PublicController {
 	}
 
 	// @ModelAttribute (for query/form binding into object)
-	// Below throwing excecption to demo GlobalExceptionHandler
+	// Below throwing exception to demo GlobalExceptionHandler
 	@PostMapping("/users/form")
-	public UserDto createUserFromForm(@ModelAttribute UserDto user) {
+	public UserDto createUserFromForm(@Valid @ModelAttribute UserDto user) {
 		int nextInt = new Random().nextInt(1, 10);
 		if(nextInt <= 4)
-			throw new IllegalArgumentException("Throwing Exception from controller...");
+			throw new IllegalArgumentException("Throwing Random Exception from controller...");
 		return demoService.saveUser(user);
 	}
 
@@ -172,24 +200,27 @@ public class PublicController {
 		return demoService.asyncCustomOperation(input).thenApply(result -> "Processed: " + result);
 	}
 
-	// @RequestAttribute demo value injected from a filter - UserNameFilter
+	// @RequestAttribute demo value injected from a filter - UserNameFilter.java
 	@GetMapping("/greet")
 	public String greet(@RequestAttribute(name = "username", required = false) String username) {
 		return "Hello, " + (username != null ? username : "anonymous") + "!";
 	}
 
 	@GetMapping("/message")
-	public String getMessage(@Value("${demo.message:Default Message}") String message) {
+	public String getMessage(@Value("${demo.message:Are Beans equal}") String message) {
 		// Creating another bean of type Scope1 in RandomComponent.java, so have to provide the bean name here to resolve the conflict
 		// else can use class name without requiring the type cast
-		return message + " " + ((Scope1)context.getBean("scope1")).getNumber();
+		// Below will return false as scope1 bean is prototype scoped and a new instance is created on every request,
+		// so both instances are different
+		boolean areEqual = ((Scope1)context.getBean("scope1")) == ((Scope1)context.getBean("scope1"));
+		return message + " " + areEqual + " " + ((Scope1)context.getBean("scope1")).getNumber();
 	}
 
 	// Its better to use specific method mapping annotations like @GetMapping, @PostMapping etc. instead of @RequestMapping
 	@GetMapping("/scope")
 	// Default is GET mapping and if method is not specified then it allows all HTTP methods and value is not needed
 	//	@RequestMapping("/scope")
-	// Use below way to restrict to specific HTTP method and IDE will suggest to use specific method annotation
+	// Use below way to restrict to specific HTTP method or IDE will suggest to use specific method annotation
 	//	@RequestMapping(value = "/scope", method=RequestMethod.POST)
 	public String getScope() {
 		// Using Singleton scoped bean & scope is context specific 
@@ -202,13 +233,33 @@ public class PublicController {
 	public String getAspectValue(@PathVariable String name) {
 		return demoAspectService.serviceMethod(name);
 	}
-	
+
 	// Use it to generate bcrypt hash of a password to store in DB for testing login
 	@GetMapping("/hash/{password}")
 	public ResponseEntity<?> hashPassword(@PathVariable String password) {
 		PasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hash = encoder.encode(password);
+		String hash = encoder.encode(password);
 		return ResponseEntity.ok(hash);
+	}
+
+	@GetMapping("first")
+	public String getFirst() {
+		return first.whoAmI();
+	}
+
+	@GetMapping("multi")
+	public String getMulti() {
+		return multi.whoAmI();
+	}
+
+	@GetMapping("name")
+	public String getName() {
+		return name;
+	}
+
+	@GetMapping("conditional-first")
+	public String checkConditionalFirst() {
+		return conditionalFirst.whoAmI();
 	}
 
 }

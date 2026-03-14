@@ -19,51 +19,60 @@ import jakarta.servlet.http.HttpSession;
 @RequestMapping("/api/secure")
 public class SecureController {
 
-    @GetMapping("/me")
-    public Map<String, Object> me(Authentication auth) {
-        return Map.of(
-                "user", auth.getName(),
-                "authorities", auth.getAuthorities()
-        );
-    }
-    
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin")
-    public String secureAdminEndpoint() {
+	@GetMapping("/me")
+	public Map<String, Object> me(Authentication auth) {
+		return Map.of(
+				"user", auth.getName(),
+				"authorities", auth.getAuthorities()
+				);
+	}
+
+	// If token is sent in the body instead of header, you can extract it like this:
+	//    @PostMapping("/validate")
+	//    public ResponseEntity<?> validate(@RequestBody TokenRequest request) {
+	//        String token = request.getToken(); // Extract the string from the JSON
+	//        // ... then call your jwtService.isTokenValid(token, userDetails)
+	//    }
+
+	@PreAuthorize("hasRole('ADMIN')")
+	@GetMapping("/admin")
+	public String secureAdminEndpoint() {
 		return "This is a secure Admin endpoint!";
 	}
-    
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/user")
-    public String secureUserEndpoint() {
-    			return "This is a secure User endpoint!";
-    }
-    
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/common")
-    public String commonsecureEndpoint() {
-    			return "This is a secure endpoint for all authenticated users!";
-    }
-    
-    @GetMapping("/logout-force")
-    public ResponseEntity<String> logoutAndForceReauth(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .header(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"demo\"")
-                .body("Logged out");
-    }
-    
-    @GetMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-    	SecurityContextHolder.getContext().setAuthentication(null);
+
+	@PreAuthorize("hasRole('USER')")
+	@GetMapping("/user")
+	public String secureUserEndpoint() {
+		return "This is a secure User endpoint!";
+	}
+
+	@PreAuthorize("isAuthenticated()")
+	@GetMapping("/common")
+	public String commonsecureEndpoint() {
+		return "This is a secure endpoint for all authenticated users!";
+	}
+
+	// This endpoint invalidates the session and forces re-authentication on the next request
+	@GetMapping("/logout-force")
+	public ResponseEntity<String> logoutAndForceReauth(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			session.invalidate();
+		}
+		return ResponseEntity
+				.status(HttpStatus.UNAUTHORIZED)
+				.header(HttpHeaders.WWW_AUTHENTICATE, "Basic realm=\"demo\"")
+				.body("Logged out");
+	}
+
+	// This endpoint clears the security context and invalidates the session, but does not force re-authentication
+	@GetMapping("/logout")
+	public ResponseEntity<String> logout(HttpServletRequest request) {
+		SecurityContextHolder.getContext().setAuthentication(null);
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			session.invalidate();
 		}
 		return ResponseEntity.ok("Logged out successfully");
-    }
+	}
 }

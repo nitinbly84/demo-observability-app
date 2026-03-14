@@ -17,4 +17,8 @@ public class Second {
 	public void postConstruct() {
 		System.out.println("Second class Post Construct method");
 	}
+	
+	public String whoAmI() {
+		return "I am Second class bean";
+	}
 }

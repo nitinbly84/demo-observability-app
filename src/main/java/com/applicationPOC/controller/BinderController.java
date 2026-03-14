@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -23,6 +24,11 @@ import com.applicationPOC.service.DemoService;
 import jakarta.validation.Valid;
 
 // Controller to demonstrate @InitBinder for trimming input strings
+/*
+ * If you are using standard Spring Controllers with Form submission (not JSON),
+ *  you can add a StringTrimmerEditor to your controller.
+ *  This is a global way to handle all strings.
+ */
 //@RestController
 @Controller
 @ResponseBody // To return response body directly instead of view name
@@ -47,6 +53,7 @@ public class BinderController {
 	// or use Postman with 'form-data' body type
 	// BindingResult to capture validation errors
 	@PostMapping("/register")
+	@PreAuthorize("hasRole('USER')") // Only allow USER role to access this endpoint
 	public ResponseEntity<?> register(@ModelAttribute @Valid UserDto user, BindingResult result) {
 		if (result.hasErrors()) {
 			Map<String, List<String>> errorMap = new HashMap<>();

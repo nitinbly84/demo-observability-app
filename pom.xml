@@ -13,7 +13,7 @@
 
 	<properties>
 		<java.version>21</java.version>
-		<spring.boot.version>3.4.0</spring.boot.version>
+		<spring.boot.version>4.1.0-M2</spring.boot.version>
 	</properties>
 
 	<dependencyManagement>
@@ -54,7 +54,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-aop</artifactId>
+			<artifactId>spring-boot-starter-aspectj</artifactId> <!--spring-boot-starter-aop is renamed to spring-boot-starter-aspectj in SpringBoot4-->
 		</dependency>
 
 		<!-- Actuator + Micrometer Prometheus -->
@@ -85,6 +85,11 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Below dependency is required since SpringBoot4-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-h2console</artifactId>
+		</dependency>
 
 		<!-- Liquibase migrations -->
 		<dependency>
@@ -92,11 +97,17 @@
 			<artifactId>liquibase-core</artifactId>
 		</dependency>
 
+		<!-- Use the Spring Boot Liquibase starter for auto-configuration -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-liquibase</artifactId>
+		</dependency>
+
 		<!-- SpringDoc OpenAPI (Swagger UI + OpenAPI 3) -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.6.0</version>
+			<version>3.0.2</version>
 		</dependency>
 
 		<!-- Spring HATEOAS -->

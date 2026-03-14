@@ -11,9 +11,14 @@ import jakarta.annotation.PreDestroy;
 @Component
 @Order(1) // To set the order of initialization if multiple classes have @PostConstruct methods
 public class First {
+	String msg;
 	
 	public First() {
 		System.out.println("First class constructor......");
+	}
+	
+	public First(String msg) {
+		this.msg = msg;
 	}
 	
 	@PostConstruct
@@ -30,4 +35,12 @@ public class First {
 	public void afterAllInit() {
 		System.out.println("First class Application Ready Event method");
 	}
+	
+	public String whoAmI() {
+		if (msg != null) {
+			return "I am First class bean with demo.first.enabled property value as " + msg;
+		}
+		return "I am First class bean";
+	}
+	
 }
