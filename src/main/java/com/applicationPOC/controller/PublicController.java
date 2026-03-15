@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.applicationPOC.aspects.DemoAspectService;
+import com.applicationPOC.config.UserProperties;
 import com.applicationPOC.event.UserCreatedEvent;
 import com.applicationPOC.model.First;
 import com.applicationPOC.model.FirstAutowiredBean;
@@ -62,6 +63,9 @@ public class PublicController {
 	// It is field injection but acceptable here for demo purpose else better to use constructor injection
 	@Autowired
 	private ApplicationContext context;
+	
+	@Autowired
+	UserProperties userProperties;
 
 	@Autowired
 	private DemoAspectService demoAspectService;
@@ -260,6 +264,11 @@ public class PublicController {
 	@GetMapping("conditional-first")
 	public String checkConditionalFirst() {
 		return conditionalFirst.whoAmI();
+	}
+	
+	@GetMapping("/user-properties")
+	public UserProperties getUserProperties() {
+		return userProperties;
 	}
 
 }
