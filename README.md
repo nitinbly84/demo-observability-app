@@ -15,3 +15,12 @@ It is document about what features can be explored & how while running this code
 **Expected Output:**
 * **If enabled:** `Feature 1 is available`
 * **If disabled:** `Feature 1 is not available`
+
+**Try using Redis:**
+execute `docker-compose.yml' to start Redis and redis-insight to look into Redis data  
+Then you can delete the keys in Redis which will reset the togglz keys  
+Access redis-insight through `http://localhost:5540/`  
+`Check the recommended settings and also check the terms & conditions switch, and then hit the “Submit” button.`    
+RedisInsight will launch in your browser. It may ask you to add a Redis database. Just enter and then hit Add Database:  
+Host: **redis**  
+Port: **6379**

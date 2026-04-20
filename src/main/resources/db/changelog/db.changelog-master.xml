@@ -94,6 +94,7 @@
     </changeSet>
 
     <!-- Insert sample users with BCrypt hashes -->
+    <!--Password for both users is "password" hashed using BCrypt-->
     <changeSet id="20260113-insert-sample-users" author="you">
         <insert tableName="users">
             <column name="username" value="user"/>

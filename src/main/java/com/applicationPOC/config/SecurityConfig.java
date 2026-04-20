@@ -12,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.togglz.core.user.NoOpUserProvider;
+import org.togglz.core.user.UserProvider;
 
 import com.applicationPOC.security.JwtAuthFilter;
 
@@ -89,6 +91,11 @@ public class SecurityConfig {
 	PasswordEncoder passwordEncoder() {
 		// BCrypt is the recommended default
 		return new BCryptPasswordEncoder();
+	}
+	
+	@Bean
+	UserProvider getUserProvider() {
+		return new NoOpUserProvider();
 	}
 
 }
