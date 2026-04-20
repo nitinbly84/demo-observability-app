@@ -42,6 +42,7 @@ import com.applicationPOC.model.MultiAutowiredBean;
 import com.applicationPOC.model.Scope1;
 import com.applicationPOC.model.UserDto;
 import com.applicationPOC.service.DemoService;
+import com.applicationPOC.service.FeatureService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -63,12 +64,15 @@ public class PublicController {
 	// It is field injection but acceptable here for demo purpose else better to use constructor injection
 	@Autowired
 	private ApplicationContext context;
-	
+
 	@Autowired
 	UserProperties userProperties;
 
 	@Autowired
 	private DemoAspectService demoAspectService;
+
+	@Autowired
+	private FeatureService featureService;
 
 	@Autowired
 	private FirstAutowiredBean first;
@@ -149,7 +153,7 @@ public class PublicController {
 	@PostMapping("/users")
 	@ResponseStatus(HttpStatus.CREATED)
 	// Using BindingResult to handle validation errors as such errors are not caught by GlobalExceptionHandler
-	// validation errors skip the controller method and go directly to Spring’s internal handler
+	// validation errors skip the controller method and go directly to Springï¿½s internal handler
 	// https://medium.com/@AlexanderObregon/showing-form-field-error-messages-in-spring-boot-without-custom-templates-517e3b41fbd7
 	public ResponseEntity<?> createUser(@Valid @RequestBody UserDto user, BindingResult result) {
 		if (result.hasErrors()) {
@@ -265,10 +269,20 @@ public class PublicController {
 	public String checkConditionalFirst() {
 		return conditionalFirst.whoAmI();
 	}
-	
+
 	@GetMapping("/user-properties")
 	public UserProperties getUserProperties() {
 		return userProperties;
+	}
+
+	@GetMapping("/feature/{feature}")
+	public String checkFeature(@PathVariable String feature) {
+		return switch(feature) {
+		case "feature1" -> featureService.isFeature1Available();
+		case "feature2" -> featureService.isFeature2Available();
+		case "feature3" -> featureService.isFeature3Available();
+		default -> "Invalid feature name";
+		};
 	}
 
 }

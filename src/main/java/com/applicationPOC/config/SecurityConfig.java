@@ -41,6 +41,7 @@ public class SecurityConfig {
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/auth/login").permitAll()
 				.requestMatchers("/auth/login").permitAll()
 				.requestMatchers("/actuator/health", "/actuator/info").permitAll()
+				.requestMatchers("/togglz-console/**").permitAll()
 				// Actuator & secure APIs require auth
 				.requestMatchers("/actuator/**").hasRole("ADMIN")
 				.requestMatchers("/api/secure/**").authenticated()
