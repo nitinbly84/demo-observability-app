@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: demo-observability-app
+  cloud:
+    vault:
+      uri: ${VAULT_ADDR:http://localhost:8200}
+      authentication: APPROLE
+      app-role:
+        role-id: 1ca646c0-e883-806f-6b8f-8aac5ce2b66b
+        secret-id: 2f346fa3-9c02-ac0c-7232-08a90daa2ae3
+        role: "springboot-role"
+      kv:
+        enabled: true
+        backend: secret # This must match the -path=secret we enabled
+        # Explicitly setting this prevents lookups to 'secret/application'
+        application-name: demo-observability-app
+        default-context: demo-observability-app
+        profile-separator: '/'
+  config:
+    import: vault://secret/demo-observability-app

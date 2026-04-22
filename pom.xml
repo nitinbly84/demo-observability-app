@@ -22,9 +22,10 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 
 	<properties>
 		<java.version>21</java.version>
-		<spring.boot.version>4.1.0-M2</spring.boot.version>
+		<spring.boot.version>4.0.3</spring.boot.version><!-- Using this version due compatibility issues with Spring Cloud, erlier was using 4.1.0-M2-->
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
+		<spring-cloud.version>2025.1.1</spring-cloud.version>
 	</properties>
 
 	<dependencyManagement>
@@ -33,6 +34,13 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-dependencies</artifactId>
 				<version>${spring.boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -161,7 +169,7 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 			<artifactId>togglz-spring-security</artifactId>
 			<version>4.6.1</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
@@ -187,6 +195,15 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jdbc-test</artifactId>
 			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-vault-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-bootstrap</artifactId>
 		</dependency>
 	</dependencies>
 

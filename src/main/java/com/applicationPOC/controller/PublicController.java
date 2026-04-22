@@ -95,6 +95,14 @@ public class PublicController {
 	@Value("${demo.name:Default Name}") // Injecting value from application.properties with default value
 	private String name;
 
+	// It is part of version1 and random.secret.key has replaced in version 2 and version 2 is visible and due to this is not initialzed,
+	// so commenting it out to avoid error. Can be used to test the changes in different versions of the app by adding and removing the property in application.properties file
+	//	@Value("${secret.key}")
+	//  private String secretValue;
+
+	@Value("${random.secret.key}")
+	private String randomValue;
+
 	public PublicController(DemoService demoService, ApplicationEventPublisher publisher) {
 		this.demoService = demoService;
 		this.publisher = publisher;
@@ -283,6 +291,11 @@ public class PublicController {
 		case "feature3" -> featureService.isFeature3Available();
 		default -> "Invalid feature name";
 		};
+	}
+
+	@GetMapping("/secret")
+	public String getSecret() {
+		return randomValue;
 	}
 
 }
