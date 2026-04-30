@@ -1,6 +1,7 @@
 package com.applicationPOC.model;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 @Component
+@Primary
 @Order(1) // To set the order of initialization if multiple classes have @PostConstruct methods
 public class First {
 	String msg;

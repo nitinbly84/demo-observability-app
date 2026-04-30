@@ -3,7 +3,9 @@ package com.applicationPOC.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
 import org.springframework.vault.core.VaultTemplate;
 import org.springframework.vault.support.VaultResponse;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import jakarta.annotation.PostConstruct;
 
 @RestController
 @RequestMapping("/vault")
@@ -35,8 +39,13 @@ public class VaultController {
 	}
 	
 	@GetMapping("/secrets")
-	public Map<String, String> getAllSecrets() {
-		return (Map<String, String>)vaultTemplate.read("secret/data/demo-observability-app").getData().get("data"); // Access the 'data' field for KV-V2
+	public ResponseEntity<Object> getAllSecrets() {
+		@Nullable
+		VaultResponse vaultResponse = vaultTemplate.read("secret/data/demo-observability-app");
+		if(vaultResponse == null || vaultResponse.getData() == null) {
+			return ResponseEntity.notFound().build();
+		}
+		return ResponseEntity.ok(vaultResponse.getData().get("data")); // Access the 'data' field for KV-V2
 	}
 	
 	@GetMapping("/secretByKey")
@@ -69,5 +78,15 @@ public class VaultController {
 
         return "Secret stored successfully!";
     }
+	
+	// This method is called after the controller is constructed and dependencies are injected
+	// It checks if the critical configuration key is set, and if not, it throws a custom exception to trigger the failure analyzer
+	@PostConstruct
+	public void validateInjectedKeys() {
+		if ("NOT_SET".equals(secretValue)) {
+            // This is where the custom exception is thrown
+            throw new RuntimeException("secret.key1");
+		}
+	}
 
 }

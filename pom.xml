@@ -22,7 +22,8 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 
 	<properties>
 		<java.version>21</java.version>
-		<spring.boot.version>4.0.3</spring.boot.version><!-- Using this version due compatibility issues with Spring Cloud, erlier was using 4.1.0-M2-->
+		<spring.boot.version>4.0.3</spring.boot.version><!-- Using this version
+		due compatibility issues with Spring Cloud, erlier was using 4.1.0-M2-->
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 		<spring-cloud.version>2025.1.1</spring-cloud.version>
@@ -186,6 +187,13 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- It is required to start containers on the start of the application-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-docker-compose</artifactId>
+			<optional>true</optional>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
@@ -202,9 +210,16 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 			<artifactId>spring-cloud-starter-vault-config</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-bootstrap</artifactId>
+			<groupId>org.springframework.retry</groupId>
+			<artifactId>spring-retry</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+			<version>3.5.14</version>
+			<scope>compile</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -245,7 +260,9 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
 				<configuration>
+					<release>21</release>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.springframework.boot</groupId>
@@ -255,6 +272,31 @@ Instead, we are using dependency management to import the Spring Boot dependenci
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+			<!--<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<id>docker-cleanup</id>
+						<phase>initialize</phase>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+						<configuration>
+							<executable>docker-compose</executable>
+							<arguments>
+								<argument>down</argument>
+								<argument>-v</argument>
+							</arguments>
+							<successCodes>
+								<code border="0">0</code>
+								<code border="1">1</code>
+							</successCodes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>-->
 		</plugins>
 	</build>
 </project>

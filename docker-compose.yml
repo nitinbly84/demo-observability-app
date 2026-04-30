@@ -1,5 +1,6 @@
+name: demo-observability-app
+
 services:
-  #redis
   redis:
     image: redis:8.4.2-alpine3.22
     container_name: redis
@@ -9,33 +10,55 @@ services:
     volumes:
       - redis-data:/data
     networks:
-      - redis-network
+      - app-network
     healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
-      retries: 3
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
       timeout: 5s
-  #redis-insight
-  redis-insight:
-    image: redis/redisinsight:latest
-    container_name: redis-insight
-    restart: unless-stopped
-    ports:
-      - "5540:5540"
-    volumes:
-      - redis-insight-data:/data
-    networks:
-      - redis-network
-    depends_on:
-      - redis
+      retries: 3
 
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: vault-prod
+    ports:
+      - "8200:8200"
+    volumes:
+      - ./vault/config:/vault/config
+      - ./vault/data:/vault/file
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+    networks:
+      - app-network
+    command: vault server -config=/vault/config/vault-config.hcl
+    healthcheck:
+      # FIX: Returns 0 if process is alive, even if sealed. 
+      # This allows vault-init to move past 'depends_on'.
+      test: ["CMD-SHELL", "vault status -format=json || exit 0"]
+      interval: 3s
+      retries: 10
+
+  vault-init:
+      image: hashicorp/vault:1.15
+      container_name: vault-init
+      depends_on:
+        vault:
+          condition: service_healthy
+      volumes:
+        - ./setup-vault.sh:/setup-vault.sh
+        - ./vault/config:/vault/config
+      entrypoint: ["/bin/sh", "/setup-vault.sh"]
+      networks:
+        - app-network
+      environment:
+        - VAULT_ADDR=http://vault:8200
+    
 volumes:
   redis-data:
-    driver: local
   redis-insight-data:
-    driver: local
+  vault-data:
 networks:
-  redis-network:
+  app-network:
     driver: bridge

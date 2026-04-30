@@ -1,0 +1,32 @@
+spring:
+  cloud:
+    vault:
+      enabled: true
+      uri: ${VAULT_URI:http://localhost:8200}
+      connection-timeout: 5000
+      read-timeout: 5000
+      fail-fast: true # This makes the app wait for Vault
+      retry:
+         enabled: true
+         initial-intervalā: 4000
+         max-attempts: 10
+      authentication: APPROLE
+      app-role:
+        role-id: ${VAULT_ROLE_ID}
+        secret-id: ${VAULT_SECRET_ID}
+        role: ${VAULT_ROLE_NAME:springboot-role}
+      kv:
+        enabled: true
+        backend: secret
+        default-context: demo-observability-app
+        kv-version: 2            # Explicitly tell Spring it is KV version 2
+        application-name: demo-observability-app
+  config:
+    import: "vault://secret/demo-observability-app"
+  
+  # Prevent Docker Compose from shutting down on failure while debugging
+  docker:
+    compose:
+      lifecycle-management: start_only
+      startup:
+        command:up
