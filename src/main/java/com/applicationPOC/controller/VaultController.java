@@ -15,8 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 
+@Tag(name = "Vault Controller", description = "Endpoints for managing secrets in Vault")
 @RestController
 @RequestMapping("/vault")
 public class VaultController {
@@ -33,11 +37,13 @@ public class VaultController {
 		this.vaultTemplate = vaultTemplate;
 	}
 	
+	@Operation(summary = "Get default secret value", description = "Returns the value of the configured secret key")
 	@GetMapping("/secret")
 	public String getSecret() {
 		return secretValue;
 	}
 	
+	@Operation(summary = "Get all secrets", description = "Returns all key-value pairs stored under the demo-observability-app path in Vault")
 	@GetMapping("/secrets")
 	public ResponseEntity<Object> getAllSecrets() {
 		@Nullable
@@ -48,6 +54,7 @@ public class VaultController {
 		return ResponseEntity.ok(vaultResponse.getData().get("data")); // Access the 'data' field for KV-V2
 	}
 	
+	@Operation(summary = "Get secret by key", description = "Returns the value of a specific key stored under the demo-observability-app path in Vault")
 	@GetMapping("/secretByKey")
 	public Object getSecretByKey(@RequestParam String key) {
 		return vaultTemplate.opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.KV_2)
@@ -56,6 +63,8 @@ public class VaultController {
                 .getOrDefault(key, key+" doesn't exist"); // Throws an exception if data is missing instead of returning null
 	}
 	
+	@Operation(summary = "Write secret", description = "Writes a key-value pair to the demo-observability-app path in Vault. If the key already exists, it updates the value and creates a new version.")
+	@SecurityRequirement(name = "Bearer Authentication")
 	@PostMapping("/manage/secrets")
     public String writeSecret(@RequestParam String key, @RequestParam String value) {
 		// 1. Use the version-aware API to avoid manual /data/ pathing

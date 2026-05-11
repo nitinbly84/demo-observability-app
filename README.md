@@ -119,10 +119,10 @@ Access the following local endpoints once the application is active:
 
 Two distinct scheduling behaviours are demonstrated side-by-side in `ScheduledPrint`:
 
-| Task | Annotation | Behaviour |
-|---|---|---|
-| `printMessage` | `@Scheduled(fixedDelay=5s)` | Next run starts **5 s after** the previous one **finishes** (sequential) |
-| `printMessage2` | `@Scheduled(fixedRate=5s)` | Fires every **5 s from start**, regardless of completion (can overlap) |
+| Task | Annotation | Behaviour |  
+|---|---|---|  
+| `printMessage` | `@Scheduled(fixedDelay=5s)` | Next run starts **5 s after** the previous one **finishes** (sequential) |  
+| `printMessage2` | `@Scheduled(fixedRate=5s)` | Fires every **5 s from start**, regardless of completion (can overlap) |  
 
 Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay contrast visible in logs. Thread-pool size is set to `3` (`spring.task.scheduling.pool.size`) to allow concurrent execution.
 
@@ -136,18 +136,18 @@ Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay con
 
 ### 🌐 Spring MVC — Comprehensive Annotation Coverage
 
-| Annotation | Demonstrated In |
-|---|---|
-| `@PathVariable` | `/api/public/cached/{id}`, `/api/public/users/{id}` |
-| `@RequestParam` | `/api/public/search`, `/api/products/by-category` |
-| `@RequestHeader` | `/api/public/user-agent` |
-| `@CookieValue` | `/api/public/welcome` |
-| `@RequestAttribute` | `/api/public/greet` (value injected by `UsernameFilter`) |
-| `@RequestBody` | `POST /api/public/users` |
-| `@ModelAttribute` | `POST /api/public/users/form` |
-| `@ResponseStatus` | `POST /api/public/users` → `201 Created` |
-| `@InitBinder` | `BinderController` (auto-trims all String form fields) |
-| `@CrossOrigin` | `PublicController` |
+| Annotation | Demonstrated In |  
+|---|---|  
+| `@PathVariable` | `/api/public/cached/{id}`, `/api/public/users/{id}` |  
+| `@RequestParam` | `/api/public/search`, `/api/products/by-category` |  
+| `@RequestHeader` | `/api/public/user-agent` |  
+| `@CookieValue` | `/api/public/welcome` |  
+| `@RequestAttribute` | `/api/public/greet` (value injected by `UsernameFilter`) |  
+| `@RequestBody` | `POST /api/public/users` |  
+| `@ModelAttribute` | `POST /api/public/users/form` |  
+| `@ResponseStatus` | `POST /api/public/users` → `201 Created` |  
+| `@InitBinder` | `BinderController` (auto-trims all String form fields) |  
+| `@CrossOrigin` | `PublicController` |  
 
 **Problem Details (RFC 9457)** — `spring.mvc.problemdetails.enabled=true` converts exceptions into the standard `application/problem+json` response format.
 
@@ -208,25 +208,25 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 
 ## 🛠 Tech Stack & Versions
 
-| Layer | Technology | Version |
-|---|---|---|
-| Framework | Spring Boot | **4.0.3** |
-| Cloud | Spring Cloud (Vault, Retry) | **2025.1.1** |
-| Language | Java | **21** |
-| Security | Spring Security + JWT (jjwt) | jjwt **0.12.5** |
-| Secret Management | HashiCorp Vault (KV-V2, AppRole) | Vault **1.15** |
-| Caching | Spring Cache + Redis | Redis **8.4.2-alpine** |
-| Feature Flags | Togglz | **4.6.1** |
-| Database | H2 (in-memory) | — |
-| Migrations | Liquibase | — |
-| Async / Scheduling | Spring `@Async`, `@Scheduled` | — |
-| Observability | Spring Actuator + Micrometer + Prometheus | Springdoc **3.0.2** |
-| API Docs | SpringDoc OpenAPI (Swagger UI) | **3.0.2** |
-| AOP | Spring AOP (AspectJ proxy) | — |
-| Templates | Thymeleaf | — |
-| Infrastructure | Docker Compose | — |
-| Container Build | Google Jib Maven Plugin | **3.4.3** |
-| Build Tool | Maven | 3.9+ |
+| Layer | Technology | Version |  
+|---|---|---|  
+| Framework | Spring Boot | **4.0.3** |  
+| Cloud | Spring Cloud (Vault, Retry) | **2025.1.1** |  
+| Language | Java | **21** |  
+| Security | Spring Security + JWT (jjwt) | jjwt **0.12.5** |  
+| Secret Management | HashiCorp Vault (KV-V2, AppRole) | Vault **1.15** |  
+| Caching | Spring Cache + Redis | Redis **8.4.2-alpine** |  
+| Feature Flags | Togglz | **4.6.1** |  
+| Database | H2 (in-memory) | — |  
+| Migrations | Liquibase | — |  
+| Async / Scheduling | Spring `@Async`, `@Scheduled` | — |  
+| Observability | Spring Actuator + Micrometer + Prometheus | Springdoc **3.0.2** |  
+| API Docs | SpringDoc OpenAPI (Swagger UI) | **3.0.2** |  
+| AOP | Spring AOP (AspectJ proxy) | — |  
+| Templates | Thymeleaf | — |  
+| Infrastructure | Docker Compose | — |  
+| Container Build | Google Jib Maven Plugin | **3.4.3** |  
+| Build Tool | Maven | 3.9+ |  
 
 ---
 
@@ -304,24 +304,24 @@ Project/
 
 Understanding which file controls what prevents confusion when tuning behaviour:
 
-| File | Loaded By | Controls |
-|---|---|---|
-| `application.properties` | Spring Boot | Server port, active profile (`dev`), H2 datasource, Liquibase, Actuator exposure, Swagger paths, scheduling pool size, logging levels |
-| `application.yml` | Spring Boot | Spring Cloud Vault connection (URI, AppRole credentials, KV-V2 path), Docker Compose lifecycle (`start_only`) |
-| `User.properties` | `@ConfigurationProperties` | `user.min.role.length`, `user.max.role.length` (used by `@DynamicMin`) |
-| `ValidationMessages.properties` | Bean Validation | Custom constraint message templates |
-| `vault/config/vault-config.hcl` | HashiCorp Vault | Vault server — storage backend (file), listener (TCP 8200), UI enabled |
-| `vault/config/keys.txt` | `setup-vault.sh` | ⚠ Runtime-generated — unseal key + root token. Gitignore this. |
+| File | Loaded By | Controls |  
+|---|---|---|  
+| `application.properties` | Spring Boot | Server port, active profile (`dev`), H2 datasource, Liquibase, Actuator exposure, Swagger paths, scheduling pool size, logging levels |  
+| `application.yml` | Spring Boot | Spring Cloud Vault connection (URI, AppRole credentials, KV-V2 path), Docker Compose lifecycle (`start_only`) |  
+| `User.properties` | `@ConfigurationProperties` | `user.min.role.length`, `user.max.role.length` (used by `@DynamicMin`) |  
+| `ValidationMessages.properties` | Bean Validation | Custom constraint message templates |  
+| `vault/config/vault-config.hcl` | HashiCorp Vault | Vault server — storage backend (file), listener (TCP 8200), UI enabled |  
+| `vault/config/keys.txt` | `setup-vault.sh` | ⚠ Runtime-generated — unseal key + root token. Gitignore this. |  
 
 ### Active Profile
 
 The `dev` profile is active by default (`spring.profiles.active=dev` in `application.properties`). Key differences:
 
-| Behaviour | `dev` | `prod` |
-|---|---|---|
-| CacheManager | Redis | ConcurrentMapCache |
-| `devOnlyBean` | Created | Not created |
-| H2 Console | Enabled | Should be disabled |
+| Behaviour | `dev` | `prod` |  
+|---|---|---|  
+| CacheManager | Redis | ConcurrentMapCache |  
+| `devOnlyBean` | Created | Not created |  
+| H2 Console | Enabled | Should be disabled |  
 
 To switch: change `spring.profiles.active=prod` in `application.properties` or pass `-Dspring.profiles.active=prod` at runtime.
 
@@ -339,11 +339,11 @@ docker compose up -d
 
 This starts three services:
 
-| Service | Image | Port | Purpose |
-|---|---|---|---|
-| `redis` | `redis:8.4.2-alpine3.22` | `6379` | Cache + Togglz state store |
-| `vault-prod` | `hashicorp/vault:1.15` | `8200` | Secret management |
-| `vault-init` | `hashicorp/vault:1.15` | — | One-shot: init, unseal, AppRole, seed |
+| Service | Image | Port | Purpose |  
+|---|---|---|---|  
+| `redis` | `redis:8.4.2-alpine3.22` | `6379` | Cache + Togglz state store |  
+| `vault-prod` | `hashicorp/vault:1.15` | `8200` | Secret management |  
+| `vault-init` | `hashicorp/vault:1.15` | — | One-shot: init, unseal, AppRole, seed |  
 
 ### Step 2 — Verify Vault bootstrap completed
 
@@ -396,17 +396,17 @@ docker compose up -d --force-recreate vault vault-init
 
 ### Step 1 — Set environment variables
 
-| Variable | Description | Default (setup-vault.sh) |
-|---|---|---|
-| `VAULT_URI` | Vault server URL | `http://localhost:8200` |
-| `VAULT_ROLE_ID` | AppRole Role ID | `demo-app-role-id` |
-| `VAULT_SECRET_ID` | AppRole Secret ID | `demo-app-secret-id` |
-| `VAULT_ROLE_NAME` | AppRole name | `springboot-role` |
+| Variable | Description | Default (setup-vault.sh) |  
+|---|---|---|  
+| `VAULT_URI` | Vault server URL | `http://localhost:8200` |  
+| `VAULT_ROLE_ID` | AppRole Role ID | `demo-app-role-id` |  
+| `VAULT_SECRET_ID` | AppRole Secret ID | `demo-app-secret-id` |  
+| `VAULT_ROLE_NAME` | AppRole name | `springboot-role` |  
 
 ### Step 2 — Build and run
 
 ```bash
-# Build (skip tests for speed)
+# Build (skip tests for speed) to create .jar file
 mvn clean package -DskipTests
 
 # Run via Maven
@@ -421,6 +421,12 @@ VAULT_ROLE_ID=demo-app-role-id \
 VAULT_SECRET_ID=demo-app-secret-id \
 java -jar target/demo-observability-app-1.0.0.jar
 ```
+
+### Step 3 — Build and create docker image
+**mvn compile jib:dockerBuild**  
+Note: This requires a Docker daemon running on your machine to host the image.  
+Else use : **mvn compile jib:buildTar**  
+Note: This will create a target/jib-image.tar file that you can move or inspect.  
 
 The application starts on **`http://localhost:8080`**.
 
@@ -474,14 +480,14 @@ Eclipse does **not** natively support `.env` files in run configurations.
 
 ## 🔐 Vault — Important Notes
 
-| Concern | Detail |
-|---|---|
-| **`keys.txt`** | Generated by `vault-init` at `./vault/config/keys.txt`. Contains the unseal key and root token. **Add to `.gitignore`** — never commit. |
-| **`vault/data/`** | Vault's file storage backend. Consider moving outside the project folder so Vault state survives project cleans. |
-| **Recreating Vault** | Always delete `keys.txt` **and** `vault/data/` before recreating the container — otherwise the new container inherits the previous sealed state. |
-| **Startup order** | Always start Docker Compose **before** the Spring Boot app. The app has `fail-fast: true` and will exit immediately if Vault is unreachable. Spring Retry will attempt up to 10 connections (4 s apart). |
-| **Token TTL** | AppRole tokens expire in **1 h** (max 4 h). For long dev sessions ensure Vault is still running. |
-| **`setup-vault.sh` line endings** | Must use **LF** (Unix) line endings — not CRLF. If cloned on Windows, run `dos2unix setup-vault.sh` or configure Git's `core.autocrlf=false`. |
+| Concern | Detail |  
+|---|---|  
+| **`keys.txt`** | Generated by `vault-init` at `./vault/config/keys.txt`. Contains the unseal key and root token. **Add to `.gitignore`** — never commit. |  
+| **`vault/data/`** | Vault's file storage backend. Consider moving outside the project folder so Vault state survives project cleans. |  
+| **Recreating Vault** | Always delete `keys.txt` **and** `vault/data/` before recreating the container — otherwise the new container inherits the previous sealed state. |  
+| **Startup order** | Always start Docker Compose **before** the Spring Boot app. The app has `fail-fast: true` and will exit immediately if Vault is unreachable. Spring Retry will attempt   up to 10 connections (4 s apart). |
+| **Token TTL** | AppRole tokens expire in **1 h** (max 4 h). For long dev sessions ensure Vault is still running. |  
+| **`setup-vault.sh` line endings** | Must use **LF** (Unix) line endings — not CRLF. If cloned on Windows, run `dos2unix setup-vault.sh` or configure Git's `core.autocrlf=false`. |  
 
 ---
 
@@ -565,85 +571,85 @@ Periodic task running only after application started...   ← DynamicScheduler
 
 ### Public Endpoints (`/api/public/**`) — No authentication required
 
-| Method | Path | Feature Demonstrated |
-|---|---|---|
-| `GET` | `/api/public/ping` | Health check |
-| `GET` | `/api/public/cached/{id}` | `@Cacheable` + `@PathVariable` |
-| `GET` | `/api/public/search?keyword=&page=` | `@RequestParam` |
-| `GET` | `/api/public/user-agent` | `@RequestHeader` |
-| `GET` | `/api/public/welcome` | `@CookieValue` + cookie set |
-| `GET` | `/api/public/greet` | `@RequestAttribute` (set by `UsernameFilter`) |
-| `POST` | `/api/public/users` | `@RequestBody` + Bean Validation + Spring Events |
-| `GET` | `/api/public/users/{id}` | JPA lookup |
-| `POST` | `/api/public/users/form` | `@ModelAttribute` + Global Exception Handler |
-| `GET` | `/api/public/async/{input}` | `@Async` (default pool) |
-| `GET` | `/api/public/custom-async/{input}` | `@Async` (custom `transcodingPoolTaskExecutor`) |
-| `GET` | `/api/public/message` | Prototype scope + SpEL |
-| `GET` | `/api/public/scope` | Singleton scope |
-| `GET` | `/api/public/aspect-value/{name}` | AOP `@Around` (return value modification) |
-| `GET` | `/api/public/hash/{password}` | BCrypt hash generator |
-| `GET` | `/api/public/conditional-first` | `@ConditionalOnProperty` |
-| `GET` | `/api/public/user-properties` | `@ConfigurationProperties` |
-| `GET` | `/api/public/feature/{feature}` | Togglz feature flag check |
-| `GET` | `/api/public/name` | `@Value` with default |
+| Method | Path | Feature Demonstrated |  
+|---|---|---|  
+| `GET` | `/api/public/ping` | Health check |  
+| `GET` | `/api/public/cached/{id}` | `@Cacheable` + `@PathVariable` |  
+| `GET` | `/api/public/search?keyword=&page=` | `@RequestParam` |  
+| `GET` | `/api/public/user-agent` | `@RequestHeader` |  
+| `GET` | `/api/public/welcome` | `@CookieValue` + cookie set |  
+| `GET` | `/api/public/greet` | `@RequestAttribute` (set by `UsernameFilter`) |  
+| `POST` | `/api/public/users` | `@RequestBody` + Bean Validation + Spring Events |  
+| `GET` | `/api/public/users/{id}` | JPA lookup |  
+| `POST` | `/api/public/users/form` | `@ModelAttribute` + Global Exception Handler |  
+| `GET` | `/api/public/async/{input}` | `@Async` (default pool) |  
+| `GET` | `/api/public/custom-async/{input}` | `@Async` (custom `transcodingPoolTaskExecutor`) |  
+| `GET` | `/api/public/message` | Prototype scope + SpEL |  
+| `GET` | `/api/public/scope` | Singleton scope |  
+| `GET` | `/api/public/aspect-value/{name}` | AOP `@Around` (return value modification) |  
+| `GET` | `/api/public/hash/{password}` | BCrypt hash generator |  
+| `GET` | `/api/public/conditional-first` | `@ConditionalOnProperty` |  
+| `GET` | `/api/public/user-properties` | `@ConfigurationProperties` |  
+| `GET` | `/api/public/feature/{feature}` | Togglz feature flag check |  
+| `GET` | `/api/public/name` | `@Value` with default |  
 
 ### Auth Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/auth/login` | Authenticate → receive JWT |
+| Method | Path | Description |  
+|---|---|---|  
+| `POST` | `/auth/login` | Authenticate → receive JWT |  
 
 ### Secure Endpoints (`/api/secure/**`) — JWT required
 
-| Method | Path | Role Required |
-|---|---|---|
-| `GET` | `/api/secure/me` | Any authenticated user |
-| `GET` | `/api/secure/common` | Any authenticated user |
-| `GET` | `/api/secure/user` | `ROLE_USER` |
-| `GET` | `/api/secure/admin` | `ROLE_ADMIN` |
-| `GET` | `/api/secure/logout` | Any authenticated user |
-| `GET` | `/api/secure/logout-force` | Any authenticated user |
+| Method | Path | Role Required |  
+|---|---|---|  
+| `GET` | `/api/secure/me` | Any authenticated user |  
+| `GET` | `/api/secure/common` | Any authenticated user |  
+| `GET` | `/api/secure/user` | `ROLE_USER` |  
+| `GET` | `/api/secure/admin` | `ROLE_ADMIN` |  
+| `GET` | `/api/secure/logout` | Any authenticated user |  
+| `GET` | `/api/secure/logout-force` | Any authenticated user |  
 
 ### Product Endpoints (`/api/products/**`) — JWT required
 
-| Method | Path | Feature |
-|---|---|---|
-| `GET` | `/api/products/{id}` | HATEOAS `EntityModel` |
-| `GET` | `/api/products/by-category?category=` | Paginated + HATEOAS |
-| `GET` | `/api/products/search?q=` | JPA search with pagination |
-| `GET` | `/api/products/expensive?minPrice=` | Custom JPA query |
-| `POST` | `/api/products` | Create product |
-| `PATCH` | `/api/products/{id}/stock` | Partial update |
+| Method | Path | Feature |  
+|---|---|---|  
+| `GET` | `/api/products/{id}` | HATEOAS `EntityModel` |  
+| `GET` | `/api/products/by-category?category=` | Paginated + HATEOAS |  
+| `GET` | `/api/products/search?q=` | JPA search with pagination |  
+| `GET` | `/api/products/expensive?minPrice=` | Custom JPA query |  
+| `POST` | `/api/products` | Create product |  
+| `PATCH` | `/api/products/{id}/stock` | Partial update |  
 
 ### Vault Endpoints (`/vault/**`)
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| `GET` | `/vault/secret` | None | Read `secret.key` injected from Vault at startup |
-| `GET` | `/vault/secrets` | None | List all secrets for the app path |
-| `GET` | `/vault/secretByKey?key=` | None | Read a specific secret key |
-| `POST` | `/vault/manage/secrets?key=&value=` | `ROLE_ADMIN` | Write / update a secret (read-modify-write) |
+| Method | Path | Auth | Description |  
+|---|---|---|---|  
+| `GET` | `/vault/secret` | None | Read `secret.key` injected from Vault at startup |  
+| `GET` | `/vault/secrets` | None | List all secrets for the app path |  
+| `GET` | `/vault/secretByKey?key=` | None | Read a specific secret key |  
+| `POST` | `/vault/manage/secrets?key=&value=` | `ROLE_ADMIN` | Write / update a secret (read-modify-write) |  
 
 ### Binder Endpoint (`/api/binder/**`) — JWT + `ROLE_USER`
 
-| Method | Path | Feature |
-|---|---|---|
-| `POST` | `/api/binder/register` | `@InitBinder` + `StringTrimmerEditor` auto-trims whitespace |
+| Method | Path | Feature |  
+|---|---|---|  
+| `POST` | `/api/binder/register` | `@InitBinder` + `StringTrimmerEditor` auto-trims whitespace |  
 
 ---
 
 ## 📊 Observability Endpoints
 
-| Endpoint | Access | Description |
-|---|---|---|
-| `/actuator/health` | Public | App + dependency health (shows DB, Redis, Vault status) |
-| `/actuator/info` | Public | App name & version (from `info.*` properties) |
-| `/actuator/metrics` | `ROLE_ADMIN` | All registered Micrometer metrics |
-| `/actuator/prometheus` | `ROLE_ADMIN` (unrestricted in config) | Prometheus scrape endpoint |
-| `/swagger-ui.html` | Public | Interactive API docs |
-| `/v3/api-docs` | Public | OpenAPI JSON spec |
-| `/h2-console` | Public | H2 in-memory DB console |
-| `/togglz-console` | Public (dev) | Feature flag management |
+| Endpoint | Access | Description |  
+|---|---|---|  
+| `/actuator/health` | Public | App + dependency health (shows DB, Redis, Vault status) |  
+| `/actuator/info` | Public | App name & version (from `info.*` properties) |  
+| `/actuator/metrics` | `ROLE_ADMIN` | All registered Micrometer metrics |  
+| `/actuator/prometheus` | `ROLE_ADMIN` (unrestricted in config) | Prometheus scrape endpoint |  
+| `/swagger-ui.html` | Public | Interactive API docs |  
+| `/v3/api-docs` | Public | OpenAPI JSON spec |  
+| `/h2-console` | Public | H2 in-memory DB console |  
+| `/togglz-console` | Public (dev) | Feature flag management |  
 
 ---
 

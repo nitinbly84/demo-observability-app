@@ -44,10 +44,15 @@ import com.applicationPOC.model.UserDto;
 import com.applicationPOC.service.DemoService;
 import com.applicationPOC.service.FeatureService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+@Tag(name = "PublicController", description = "Public APIs for demonstration") // Swagger/OpenAPI annotation to group APIs under a tag with description
 @RestController
 @RequestMapping("/api/public")
 //Allows browser clients running at http://localhost:3000 (e.g. React app) to call these endpoints via AJAX.
@@ -100,17 +105,24 @@ public class PublicController {
 		this.publisher = publisher;
 	}
 
+	// Swagger/OpenAPI annotation to provide summary and description for the API,
+	// it will be shown in the generated API docs (e.g. Swagger UI) for better understanding of the API's purpose and functionality
+	@Operation(summary = "Ping endpoint", description = "Returns pong to test connectivity")
+	@ApiResponse(responseCode = "200", description = "Successful ping response") // Swagger/OpenAPI annotation to document the API response
 	@GetMapping("/ping")
 	public String ping() {
 		return "pong";
 	}
-
+	// Swagger/OpenAPI annotation to provide summary and description for the API
+	@Operation(summary = "Fetch resource using internal caching mechanism", description = "Retrieves data with performance optimization via Spring's cache abstraction layer.")
 	// @PathVariable + cache
 	@GetMapping("/cached/{id}")
 	public String cached(@PathVariable String id) {
 		return demoService.expensiveCall(id);
 	}
 
+	// Swagger/OpenAPI annotation to provide summary and description for the API, also showing @RequestParam example with default values
+	@Operation(summary = "Search endpoint", description = "Searches based on keyword and page number with default values")
 	// @RequestParam example
 	@GetMapping("/search")
 	public Map<String, Object> search(@RequestParam(defaultValue = "java") String keyword,
@@ -118,12 +130,19 @@ public class PublicController {
 		return Map.of("keyword", keyword, "page", page);
 	}
 
+	// Swagger/OpenAPI annotation to provide summary and description for the API, also showing @RequestHeader example
+	@Operation(summary = "User-Agent endpoint", description = "Returns the User-Agent header value from the request")
 	// @RequestHeader example
 	@GetMapping("/user-agent")
-	public Map<String, String> userAgent(@RequestHeader("User-Agent") String userAgent) {
+	public Map<String, String> userAgent(@Parameter(hidden = true)@RequestHeader("User-Agent") String userAgent) {
 		return Map.of("userAgent", userAgent);
 	}
 
+	// Swagger/OpenAPI annotation to provide summary and description for the API, also showing @CookieValue example and setting cookie in response
+	@Operation(summary = "Welcome endpoint with cookie", description = "Welcomes the user based on the 'username' cookie value, if not present sets a default cookie.</br>"
+			+ "Swagger UI (running in your browser) is not allowed to modify or \"spoof\" cookies for the domain it is running on via JavaScript.</br>"
+			+ "So, to test this endpoint, you can use a tool like Postman or first execute the enpoint, default cookie will be set & then can change cookie value"
+			+ " in browser manually via Devtools -> Application -> Cookies.")
 	// @CookieValue + setting cookie
 	@GetMapping("/welcome")
 	// name in cookie is not required as param is same as cookie name, else name is needed
@@ -139,6 +158,7 @@ public class PublicController {
 		return "Welcome, " + username;
 	}
 
+	@Operation(summary = "Default User endpoint", description = "Returns a sample default user object to use for other API calls, useful for testing and demonstration purposes")
 	@GetMapping("/default-user")
 	public UserDto getDefaultUser() {
 		UserDto user = new UserDto();
@@ -149,6 +169,9 @@ public class PublicController {
 		return user;
 	}		
 
+	@Operation(summary = "Create User endpoint", description = "Creates a new user based on the provided user data in the request body, "
+			          + "validates the input and returns the created user with location header, also demonstrates use of binding result"
+			          + " to handle validation errors")
 	// @RequestBody + @ResponseStatus
 	@PostMapping("/users")
 	@ResponseStatus(HttpStatus.CREATED)
@@ -177,6 +200,7 @@ public class PublicController {
 				.body(user);
 	}
 
+	@Operation(summary = "Get User by ID endpoint", description = "Retrieves a user by their ID, returns 404 if user not found")
 	@GetMapping("/users/{id}")
 	public ResponseEntity<?> getUser(@PathVariable Long id) {
 		Optional<UserDto> userById = demoService.getUserById(id);
@@ -186,6 +210,8 @@ public class PublicController {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with id " + id + " not found");
 	}
 
+	@Operation(summary = "Create User from Form endpoint", description = "Creates a new user based on the provided form data,"
+			+ " validates the input and returns the created user, also demonstrates use of @ModelAttribute for form binding and throwing exception to test GlobalExceptionHandler")
 	// @ModelAttribute (for query/form binding into object)
 	// Below throwing exception to demo GlobalExceptionHandler
 	@PostMapping("/users/form")
@@ -196,24 +222,28 @@ public class PublicController {
 		return demoService.saveUser(user);
 	}
 
+	@Operation(summary = "Async endpoint", description = "Demonstrates an asynchronous operation that processes the input and returns a result after a delay")
 	// Async endpoint
 	@GetMapping("/async/{input}")
 	public CompletableFuture<String> async(@PathVariable String input) {
 		return demoService.asyncOperation(input).thenApply(result -> "Processed: " + result);
 	}
 
+	@Operation(summary = "Custom Async endpoint", description = "Demonstrates an asynchronous operation using a custom thread pool that processes the input and returns a result after a delay")
 	// Custom Async endpoint
 	@GetMapping("/custom-async/{input}")
 	public CompletableFuture<String> customAsync(@PathVariable String input) {
 		return demoService.asyncCustomOperation(input).thenApply(result -> "Processed: " + result);
 	}
 
+	@Operation(summary = "Greet endpoint", description = "Greets the user based on the 'username' request attribute, which is expected to be set by a filter, returns 'anonymous' if not present")
 	// @RequestAttribute demo value injected from a filter - UserNameFilter.java
 	@GetMapping("/greet")
 	public String greet(@RequestAttribute(name = "username", required = false) String username) {
 		return "Hello, " + (username != null ? username : "anonymous") + "!";
 	}
 
+	@Operation(summary = "Message endpoint", description = "Returns a message along with the result of comparing two prototype scoped beans, demonstrates use of @Value to inject property and SpEL to create random number")
 	@GetMapping("/message")
 	public String getMessage(@Value("${demo.message:Are Beans equal}") String message) {
 		// Creating another bean of type Scope1 in RandomComponent.java, so have to provide the bean name here to resolve the conflict
@@ -236,12 +266,14 @@ public class PublicController {
 		//		return scope1.getInstanceId();
 	}
 
+	@Operation(summary = "Aspect Value endpoint", description = "Demonstrates the use of an aspect to modify the return value of a service method, returns a modified greeting message based on the provided name")
 	// Aspect demo to modify return value
 	@GetMapping("/aspect-value/{name}")
 	public String getAspectValue(@PathVariable String name) {
 		return demoAspectService.serviceMethod(name);
 	}
 
+	@Operation(summary = "Hash Password endpoint", description = "Generates a bcrypt hash of the provided password, use it to generate the login hashed password for a user to store in the database")
 	// Use it to generate bcrypt hash of a password to store in DB for testing login
 	@GetMapping("/hash/{password}")
 	public ResponseEntity<?> hashPassword(@PathVariable String password) {
@@ -270,11 +302,14 @@ public class PublicController {
 		return conditionalFirst.whoAmI();
 	}
 
+	@Operation(summary = "User Properties endpoint", description = "Returns the user properties loaded from user.properties, demonstrates use of @ConfigurationProperties to bind properties to a POJO")
 	@GetMapping("/user-properties")
 	public UserProperties getUserProperties() {
 		return userProperties;
 	}
 
+	@Operation(summary = "Check Feature endpoint", description = "Checks the availability of a feature based on the provided feature name, returns the availability status or an error message for invalid feature names"
+			+ " Use http://localhost:8080/togglz-console to enable/disable features and test this endpoint")
 	@GetMapping("/feature/{feature}")
 	public String checkFeature(@PathVariable String feature) {
 		return switch(feature) {

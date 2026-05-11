@@ -1,5 +1,6 @@
 package com.applicationPOC.togglzFeature;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.togglz.core.Feature;
@@ -11,8 +12,16 @@ import org.togglz.core.user.UserProvider;
 import org.togglz.redis.RedisStateRepository;
 import org.togglz.spring.security.SpringSecurityUserProvider;
 
+import redis.clients.jedis.JedisPool;
+
 @Configuration
 public class TogglzConfigurations implements TogglzConfig {
+	
+	@Value("${spring.data.redis.host:localhost}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port:6379}")
+    private int redisPort;
 
 	// Define the FeatureManager bean that will be used to manage feature toggles in the application
 	@Bean
@@ -35,8 +44,14 @@ public class TogglzConfigurations implements TogglzConfig {
 	@Override
 	public StateRepository getStateRepository() {
 //		return new InMemoryStateRepository();
-		return new RedisStateRepository.Builder()
-				.build();
+		// The Togglz Builder requires a JedisPool instance to know where Redis is.
+        // Without this, it defaults to localhost.
+        JedisPool jedisPool = new JedisPool(redisHost, redisPort);
+        
+        return new RedisStateRepository.Builder()
+                .jedisPool(jedisPool)
+                .keyPrefix("togglz-") // Matches your application-dev.properties
+                .build();
 	}
 
 	// Define the UserProvider that will be used to determine the current user for feature toggle evaluation.

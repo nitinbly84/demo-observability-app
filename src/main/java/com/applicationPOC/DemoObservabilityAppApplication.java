@@ -12,6 +12,13 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import com.applicationPOC.config.UserProperties;
 
+@io.swagger.v3.oas.annotations.OpenAPIDefinition(
+	info = @io.swagger.v3.oas.annotations.info.Info(
+		title = "Demo Observability App API",
+		version = "1.0",
+		description = "API documentation for Demo Observability App"
+	)
+)
 @SpringBootApplication
 @EnableCaching
 @EnableAsync

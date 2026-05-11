@@ -68,6 +68,44 @@ services:
       environment:
         - VAULT_ADDR=http://vault:8200
 
+# --- NEW: Application Service ---
+  app:
+    image: demo-observability-app:v1
+    container_name: observability-app
+    build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          # Pass the specific JDK image here
+          - BASE_IMAGE=eclipse-temurin:21-jdk-alpine 
+          # Pass the internal port used during build
+          - APP_PORT=8080
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      # CRITICAL: Use 'vault' hostname, not localhost
+      - spring.cloud.VAULT_URI=http://vault:8200
+      - spring.cloud.VAULT_ROLE_ID=demo-app-role-id
+      - spring.cloud.VAULT_ROLE_NAME=springboot-role
+      - spring.cloud.VAULT_SECRET_ID=demo-app-secret-id
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_PROFILES_ACTIVE=dev
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CORE_IO_SUPPORT=DEBUG
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+        reservations:
+          memory: 512M
+    
 volumes:
   redis-data:
   redis-insight-data:

@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.applicationPOC.model.UserDto;
 import com.applicationPOC.service.DemoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 // Controller to demonstrate @InitBinder for trimming input strings
@@ -29,6 +32,7 @@ import jakarta.validation.Valid;
  *  you can add a StringTrimmerEditor to your controller.
  *  This is a global way to handle all strings.
  */
+@Tag(name = "BinderController", description = "Controller to demonstrate @InitBinder for trimming input strings")
 //@RestController
 @Controller
 @ResponseBody // To return response body directly instead of view name
@@ -52,6 +56,8 @@ public class BinderController {
 	// @ModelAttribute maps form data to the UserDto object, either use UI to provide form data
 	// or use Postman with 'form-data' body type
 	// BindingResult to capture validation errors
+	@Operation(summary = "Register a new user with trimmed input", description = "Registers a new user. First take the auth token from /auth/login. All string inputs will be trimmed and empty strings converted to null.")
+	@SecurityRequirement(name = "Bearer Authentication")
 	@PostMapping("/register")
 	@PreAuthorize("hasRole('USER')") // Only allow USER role to access this endpoint
 	public ResponseEntity<?> register(@ModelAttribute @Valid UserDto user, BindingResult result) {
