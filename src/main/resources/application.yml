@@ -2,7 +2,7 @@ spring:
   cloud:
     vault:
       enabled: true
-      uri: ${spring.cloud.VAULT_URI:http://localhost:8200}
+      uri: ${SPRING_CLOUD_VAULT_URI:http://localhost:8200}
       connection-timeout: 5000
       read-timeout: 5000
       fail-fast: true # This makes the app wait for Vault
@@ -12,9 +12,9 @@ spring:
          max-attempts: 10
       authentication: APPROLE
       app-role:
-        role-id: ${spring.cloud.VAULT_ROLE_ID}
-        secret-id: ${spring.cloud.VAULT_SECRET_ID}
-        role: ${spring.cloud.VAULT_ROLE_NAME:springboot-role}
+        role-id: ${SPRING_CLOUD_VAULT_ROLE_ID}
+        secret-id: ${SPRING_CLOUD_VAULT_SECRET_ID}
+        role: ${SPRING_CLOUD_VAULT_ROLE_NAME:springboot-role}
       kv:
         enabled: true
         backend: secret

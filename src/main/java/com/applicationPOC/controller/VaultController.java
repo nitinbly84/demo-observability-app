@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.vault.core.VaultKeyValueOperationsSupport;
@@ -25,6 +27,8 @@ import jakarta.annotation.PostConstruct;
 @RequestMapping("/vault")
 public class VaultController {
 	
+	Logger logger = LoggerFactory.getLogger(VaultController.class);
+	
 	@Value("${secret.key}")
 	private String secretValue;
 //
@@ -40,15 +44,18 @@ public class VaultController {
 	@Operation(summary = "Get default secret value", description = "Returns the value of the configured secret key")
 	@GetMapping("/secret")
 	public String getSecret() {
+		logger.debug("Fetching default secret value");
 		return secretValue;
 	}
 	
 	@Operation(summary = "Get all secrets", description = "Returns all key-value pairs stored under the demo-observability-app path in Vault")
 	@GetMapping("/secrets")
 	public ResponseEntity<Object> getAllSecrets() {
+		logger.info("Accessing all secrets for demo-observability-app");
 		@Nullable
 		VaultResponse vaultResponse = vaultTemplate.read("secret/data/demo-observability-app");
 		if(vaultResponse == null || vaultResponse.getData() == null) {
+			logger.warn("No secrets found at the specified Vault path");
 			return ResponseEntity.notFound().build();
 		}
 		return ResponseEntity.ok(vaultResponse.getData().get("data")); // Access the 'data' field for KV-V2
@@ -57,6 +64,7 @@ public class VaultController {
 	@Operation(summary = "Get secret by key", description = "Returns the value of a specific key stored under the demo-observability-app path in Vault")
 	@GetMapping("/secretByKey")
 	public Object getSecretByKey(@RequestParam String key) {
+		logger.info("Writing secret key: {} to Vault", key);
 		return vaultTemplate.opsForKeyValue("secret", VaultKeyValueOperationsSupport.KeyValueBackend.KV_2)
                 .get("demo-observability-app")
                 .getRequiredData()
@@ -93,9 +101,12 @@ public class VaultController {
 	@PostConstruct
 	public void validateInjectedKeys() {
 		if ("NOT_SET".equals(secretValue)) {
+			// Log the error specifically to this file before the app crashes
+            logger.error("CRITICAL CONFIGURATION ERROR: secret.key is NOT_SET. Application will terminate.");
             // This is where the custom exception is thrown
             throw new RuntimeException("secret.key1");
 		}
+		logger.info("VaultController initialized successfully with valid keys.");
 	}
 
 }

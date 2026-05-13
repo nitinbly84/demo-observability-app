@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <springProfile name="dev">
+        <property name="LOG_PATH" value="vault/logs" />
+    </springProfile>
+    
+    <springProfile name="!dev">
+        <springProperty name="LOG_PATH" source="logging.file.path" defaultValue="/opt/app/logs"/>
+    </springProfile>
+
+    <springProperty name="APP_NAME"          source="spring.application.name" defaultValue="app"/>
+    <springProperty name="LOG_LEVEL_ROOT"    source="logging.level.root" defaultValue="INFO"/>
+    <springProperty name="LOG_LEVEL_VAULT"   source="logging.level.com.applicationPOC.controller.VaultController" defaultValue="DEBUG"/>
+    <springProperty name="VAULT_MAX_HISTORY" source="logging.vault.max-history-hours" defaultValue="168"/>
+    <springProperty name="VAULT_SIZE_CAP"    source="logging.vault.total-size-cap" defaultValue="1GB"/>
+    <springProperty name="VAULT_QUEUE_SIZE"  source="logging.vault.async-queue-size" defaultValue="1024"/>
+
+    <property name="VAULT_LOG_FILE" value="${LOG_PATH}/vault-controller"/>
+
+    <property name="CONSOLE_PATTERN" value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+    <property name="FILE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %-50.50logger{49} traceId=%X{traceId:-N/A} spanId=%X{spanId:-N/A} | %msg%n%ex{full}"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="VAULT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${VAULT_LOG_FILE}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${VAULT_LOG_FILE}.%d{yyyy-MM-dd_HH}.log</fileNamePattern>
+            <maxHistory>${VAULT_MAX_HISTORY}</maxHistory>
+            <totalSizeCap>${VAULT_SIZE_CAP}</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="VAULT_ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="VAULT_FILE"/>
+        <queueSize>${VAULT_QUEUE_SIZE}</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>true</includeCallerData>
+        <neverBlock>false</neverBlock>
+    </appender>
+
+    <logger name="com.applicationPOC.controller.VaultController" level="${LOG_LEVEL_VAULT}" additivity="false">
+        <appender-ref ref="VAULT_ASYNC"/>
+    </logger>
+
+    <root level="${LOG_LEVEL_ROOT}">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
+
+</configuration>

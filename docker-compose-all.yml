@@ -1,9 +1,14 @@
 name: demo-observability-app
 
+# 1. Define the variable using an anchor
+x-timezone: &default-tz "Asia/Kolkata"
+
 services:
   redis:
     image: redis:8.4.2-alpine3.22
     container_name: redis
+    environment:
+      TZ: *default-tz # Use alias
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -28,13 +33,14 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
-      - VAULT_API_ADDR=http://0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://0.0.0.0:8200
+      TZ: *default-tz # Use alias
     networks:
       - app-network
-      # This command checks if the 'container_id' file matches the current container.
-      # If it doesn't exist or is different, it wipes the data folder.
-      # Use single quotes for the shell command so $HOSTNAME isn't interpolated by host
+    # This command checks if the 'container_id' file matches the current container.
+    # If it doesn't exist or is different, it wipes the data folder.
+    # Use single quotes for the shell command so $HOSTNAME isn't interpolated by host
     command: >
       sh -c '
           CURRENT_ID=$$(hostname);
@@ -66,12 +72,18 @@ services:
       networks:
         - app-network
       environment:
-        - VAULT_ADDR=http://vault:8200
+        VAULT_ADDR: http://vault:8200
+        TZ: *default-tz # Use alias
 
 # --- NEW: Application Service ---
   app:
     image: demo-observability-app:v1
     container_name: observability-app
+    #read_only: TRUE
+    tmpfs:
+      - /tmp # /tmp stays in-memory (JVM scratch space, no value persisting it)
+    volumes:
+      - ./vault/logs:/opt/app/logs:rw  # Persists VaultController logs on the host; survives container crashes
     build:
         context: .
         dockerfile: Dockerfile
@@ -91,13 +103,18 @@ services:
       - app-network
     environment:
       # CRITICAL: Use 'vault' hostname, not localhost
-      - spring.cloud.VAULT_URI=http://vault:8200
-      - spring.cloud.VAULT_ROLE_ID=demo-app-role-id
-      - spring.cloud.VAULT_ROLE_NAME=springboot-role
-      - spring.cloud.VAULT_SECRET_ID=demo-app-secret-id
-      - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_PROFILES_ACTIVE=dev
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CORE_IO_SUPPORT=DEBUG
+        SPRING_CLOUD_VAULT_URI: http://vault:8200
+        SPRING_CLOUD_VAULT_ROLE_ID: demo-app-role-id
+        SPRING_CLOUD_VAULT_ROLE_NAME: springboot-role
+        SPRING_CLOUD_VAULT_SECRET_ID: demo-app-secret-id
+        SPRING_DATA_REDIS_HOST: redis
+        SPRING_PROFILES_ACTIVE: dev # Change it if want to use different profile specific properties
+        LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CORE_IO_SUPPORT: DEBUG
+        LOGGING_FILE_PATH: /opt/app/logs
+        TZ: *default-tz # Sets OS timezone
+      # Injecting the same variable into Java Options and all environment variables are displayed in the logs,
+	  # so this also confirms that the variable is correctly passed to the container.
+        JAVA_OPTS: -XshowSettings:properties
     deploy:
       resources:
         limits:
@@ -108,8 +125,9 @@ services:
     
 volumes:
   redis-data:
-  redis-insight-data:
-  vault-data:
+  # Below volumes are defined but not used in this setup, as we're mounting host directories for persistence.
+  #redis-insight-data:
+  #vault-data:
 networks:
   app-network:
     driver: bridge

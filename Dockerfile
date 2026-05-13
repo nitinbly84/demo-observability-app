@@ -39,12 +39,17 @@ RUN java -Djarmode=layertools -jar app.jar extract
 
 # --- STAGE 4: Final Hardened Production Image ---
 FROM alpine:latest
+LABEL org.opencontainers.image.authors="Nitin Agrawal" \
+      org.opencontainers.image.description="A Spring Boot application with JLink runtime, optimized for production and security."
 # Re-declare the ARG in this stage to make it available
 ARG APP_PORT 
 ENV PORT=${APP_PORT}
-# 1. Install Essential Libraries
+# 1. Install Essential Libraries and set system-wide timezone
+# We set IST here so the image works correctly even without Docker Compose.
 RUN apk update && apk upgrade && \
-    apk add --no-cache gcompat libstdc++ && \
+    apk add --no-cache gcompat libstdc++ tzdata && \
+    cp /usr/share/zoneinfo/Asia/Kolkata /etc/localtime && \
+    echo "Asia/Kolkata" > /etc/timezone && \
     rm -rf /var/cache/apk/*
 # 2. Set Environment & Workspace
 ENV JAVA_HOME=/opt/jdk
@@ -71,11 +76,17 @@ EXPOSE ${PORT}
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
   CMD wget -q --spider http://localhost:${PORT}/actuator/health || exit 1
 
-# 7. Entrypoint
-ENTRYPOINT ["java", \
-            "-XX:InitialRAMPercentage=50.0", \
-            "-XX:MaxRAMPercentage=80.0", \
-            "-XX:+UseParallelGC", \
-			"-Dloader.path=BOOT-INF/classes,BOOT-INF/lib", \
-            "-Djava.security.egd=file:/dev/./urandom", \
-            "org.springframework.boot.loader.launch.JarLauncher"]
+  # 7. Entrypoint (MODIFIED for independent runtime)
+  # -Dloader.path=BOOT-INF/classes,BOOT-INF/lib \
+  # can be removed because JarLauncher will automatically look in the current directory for the classes and libs.
+  # We use the shell form (no square brackets) to allow the shell to expand 
+  # environment variables like ${JAVA_OPTS} if they exist at runtime.
+  ENTRYPOINT exec java -Duser.timezone=${TZ:-Asia/Kolkata} \
+              ${JAVA_OPTS} \
+              -XX:InitialRAMPercentage=50.0 \
+              -XX:MaxRAMPercentage=80.0 \
+              -XX:+UseG1GC \
+              -XX:+ExitOnOutOfMemoryError \
+              -Dloader.path=BOOT-INF/classes,BOOT-INF/lib \
+              -Djava.security.egd=file:/dev/./urandom \
+              org.springframework.boot.loader.launch.JarLauncher

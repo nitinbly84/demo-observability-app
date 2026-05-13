@@ -1,9 +1,14 @@
 name: demo-observability-app
 
+# 1. Define the variable using an anchor
+x-timezone: &default-tz "Asia/Kolkata"
+
 services:
   redis:
     image: redis:8.4.2-alpine3.22
     container_name: redis
+    environment:
+      TZ: *default-tz # Use alias
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -28,8 +33,9 @@ services:
     cap_add:
       - IPC_LOCK
     environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
-      - VAULT_API_ADDR=http://0.0.0.0:8200
+      VAULT_ADDR: http://0.0.0.0:8200
+      VAULT_API_ADDR: http://0.0.0.0:8200
+      TZ: *default-tz # Use alias
     networks:
       - app-network
       # This command checks if the 'container_id' file matches the current container.
@@ -66,7 +72,8 @@ services:
       networks:
         - app-network
       environment:
-        - VAULT_ADDR=http://vault:8200
+        VAULT_ADDR: http://vault:8200
+        TZ: *default-tz # Use alias
 
 volumes:
   redis-data:
