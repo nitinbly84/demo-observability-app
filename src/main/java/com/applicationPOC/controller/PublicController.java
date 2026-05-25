@@ -35,6 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.applicationPOC.aspects.DemoAspectService;
 import com.applicationPOC.config.UserProperties;
+import com.applicationPOC.dummyBeans.DummyProcessor;
+import com.applicationPOC.dummyBeans.ParentDummy;
 import com.applicationPOC.event.UserCreatedEvent;
 import com.applicationPOC.model.First;
 import com.applicationPOC.model.FirstAutowiredBean;
@@ -72,6 +74,9 @@ public class PublicController {
 
 	@Autowired
 	UserProperties userProperties;
+	
+	@Autowired
+	DummyProcessor dummyProcessor;
 
 	@Autowired
 	private DemoAspectService demoAspectService;
@@ -235,6 +240,13 @@ public class PublicController {
 	public CompletableFuture<String> customAsync(@PathVariable String input) {
 		return demoService.asyncCustomOperation(input).thenApply(result -> "Processed: " + result);
 	}
+	
+	@Operation(summary = "Virtual Threads Async endpoint", description = "Demonstrates an asynchronous operation using a virtual thread that processes the input and returns a result after a delay")
+	// Virtual Threads Async endpoint
+	@GetMapping("/virtual-async/{input}")
+	public CompletableFuture<String> virtualAsync(@PathVariable String input) {
+		return demoService.asyncVirtualOperation(input).thenApply(result -> "Processed: " + result);
+	}
 
 	@Operation(summary = "Greet endpoint", description = "Greets the user based on the 'username' request attribute, which is expected to be set by a filter, returns 'anonymous' if not present")
 	// @RequestAttribute demo value injected from a filter - UserNameFilter.java
@@ -280,6 +292,11 @@ public class PublicController {
 		PasswordEncoder encoder = new BCryptPasswordEncoder();
 		String hash = encoder.encode(password);
 		return ResponseEntity.ok(hash);
+	}
+	
+	@GetMapping("/autowired/{beanName}")
+	public String getBean(@PathVariable String beanName) {
+		return dummyProcessor.process(beanName).getBeanName();
 	}
 
 	@GetMapping("first")

@@ -1,6 +1,7 @@
 package com.applicationPOC.config;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -52,6 +53,11 @@ public class ConditionalConfig {
 		// You should not call executor.initialize(), because it's called by Spring through InitializingBean.afterPropertiesSet()
 		// executor.initialize();
 		return executor;
+	}
+	
+	@Bean
+	Executor virtualPoolTaskExecutor() {
+		return Executors.newVirtualThreadPerTaskExecutor();
 	}
 	
 	// Conditional bean creation based on property value and shows that we can create 2 beans with same name but different conditions

@@ -31,6 +31,7 @@ public class DemoService {
 	@Cacheable(cacheNames = "demoCacheDev", key = "#id")
 	public String expensiveCall(String id) {
 		log.info("Executing expensiveCall for {}", id);
+		// Simulate an expensive operation by sleeping for 2 seconds, nothing else
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException ignored) {
@@ -40,24 +41,54 @@ public class DemoService {
 
 	@Async
 	public CompletableFuture<String> asyncOperation(String input) {
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException ignored) {
-			}
-			return "async-result-" + input;
-		});
+		/*
+		 * Executing asyncOperation on Thread[#107,async-exec-1,5,main] | Is Virtual Thread? false
+		 * 
+		 * If virtual threads are not enabled, the async operation will run on a regular thread from the common ForkJoinPool,
+		 * which is what we see in the output above. 'main' indicates that it's a regular thread group, and 'async-exec-1' is the
+		 * name of the thread assigned by Spring's @Async mechanism.
+		 * 
+		 * Executing asyncOperation on Thread[#118,async-exec-1,5,VirtualThreads] | Is Virtual Thread? false
+		 * 
+		 * If virtual threads are enabled, the async operation will run on a virtual thread. 
+		 * JVM detects it is running within an environment configured to support virtual threads, 
+		 * the root ThreadGroup system maps certain unassigned or framework-spawned threads into a structural group called 'VirtualThreads' 
+		 * for monitoring and management purposes. Still thread is not Virtual because Spring's AnnotationAsyncExecutionInterceptor completely 
+		 * aborted its autoconfiguration lookup. It stopped looking for the virtual thread executor (applicationTaskExecutor) because we have
+		 * configured beans for ThreadPoolTaskExecutor and taskScheduler. Else Spring would have executed it on virtual thread and 
+		 * we would have seen 'Is Virtual Thread? true' in the output.
+		 */
+		System.out.println("Executing asyncOperation on " + Thread.currentThread().toString() 
+	            + " | Is Virtual Thread? " + Thread.currentThread().isVirtual());
+	    try {
+	        // Virtual threads block efficiently on Thread.sleep without pinning the OS thread
+	        Thread.sleep(2000); 
+	    } catch (InterruptedException ignored) {
+	        return CompletableFuture.completedFuture("interrupted-" + input);
+	    }
+	    return CompletableFuture.completedFuture("async-result-" + input);
 	}
 	
 	@Async("transcodingPoolTaskExecutor")
 	public CompletableFuture<String> asyncCustomOperation(String input) {
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				Thread.sleep(2000);
-			} catch (InterruptedException ignored) {
-			}
-			return "custom-async-result-" + input;
-		});
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException ignored) {
+		}
+		return CompletableFuture.completedFuture("custom-async-result-" + input);
+	}
+	
+	@Async("virtualPoolTaskExecutor")
+	public CompletableFuture<String> asyncVirtualOperation(String input) {
+		System.out.println("Executing asyncVirtualOperation on " + Thread.currentThread().toString() 
+	            + " | Is Virtual Thread? " + Thread.currentThread().isVirtual());
+	    try {
+	        // Virtual threads block efficiently on Thread.sleep without pinning the OS thread
+	        Thread.sleep(2000); 
+	    } catch (InterruptedException ignored) {
+	        return CompletableFuture.completedFuture("interrupted-" + input);
+	    }
+	    return CompletableFuture.completedFuture("virtual-async-result-" + input);
 	}
 
 	@Transactional

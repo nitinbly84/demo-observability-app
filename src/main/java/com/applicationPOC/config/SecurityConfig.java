@@ -8,11 +8,14 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.togglz.core.user.NoOpUserProvider;
+import org.togglz.core.user.FeatureUser;
+import org.togglz.core.user.SimpleFeatureUser;
 import org.togglz.core.user.UserProvider;
 
 import com.applicationPOC.security.JwtAuthFilter;
@@ -44,11 +47,18 @@ public class SecurityConfig {
 				.requestMatchers("/auth/login").permitAll()
 				.requestMatchers("/vault/*").permitAll()
 				.requestMatchers("/actuator/health", "/actuator/info").permitAll()
-				.requestMatchers("/togglz-console/**").permitAll()
 				// Actuator & secure APIs require auth
 				.requestMatchers("/vault/manage/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").hasRole("ADMIN")
 				.requestMatchers("/api/secure/**").authenticated()
+				// --- TOGGLZ CONSOLE SECURITY RULES ---
+				// RULE A: Strictly require ADMIN role for any modification or form submittals (POST, PUT, DELETE)
+				.requestMatchers(org.springframework.http.HttpMethod.POST, "/togglz-console/**").hasRole("ADMIN")
+				.requestMatchers(org.springframework.http.HttpMethod.PUT, "/togglz-console/**").hasRole("ADMIN")
+				.requestMatchers(org.springframework.http.HttpMethod.DELETE, "/togglz-console/**").hasRole("ADMIN")
+
+				// RULE B: Allow any authenticated user to send GET requests to see the index page and current states
+				.requestMatchers(org.springframework.http.HttpMethod.GET, "/togglz-console/**").authenticated()
 				.anyRequest().authenticated()
 				)
 		// allow H2 console frames
@@ -94,10 +104,31 @@ public class SecurityConfig {
 		// BCrypt is the recommended default
 		return new BCryptPasswordEncoder();
 	}
-	
+
+	// CRITICAL FIX 2: Replace NoOpUserProvider with a Spring Security bridge
 	@Bean
 	UserProvider getUserProvider() {
-		return new NoOpUserProvider();
+		return new UserProvider() {
+			@Override
+			public FeatureUser getCurrentUser() {
+				Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+				// If no token or not authenticated, deny Togglz admin state
+				if (authentication == null || !authentication.isAuthenticated()) {
+					return null;
+				}
+
+				String username = authentication.getName();
+
+				// Check if the user has the authority "ROLE_ADMIN"
+				// Since your HTTP chain uses .hasRole("ADMIN"), Spring prefixes it with "ROLE_" internally
+				boolean isAdmin = authentication.getAuthorities().stream()
+						.anyMatch(grantedAuthority -> grantedAuthority.getAuthority().contains("ADMIN"));
+
+				// Return the FeatureUser stating explicitly whether they are allowed to toggle features
+				return new SimpleFeatureUser(username, isAdmin);
+			}
+		};
 	}
-	
+
 }

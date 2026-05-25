@@ -8,76 +8,110 @@ A comprehensive **Spring Boot proof-of-concept** application that demonstrates a
 
 ## 📑 Table of Contents
 
-- [⚡ Quick Start (TL;DR)](#-quick-start-tldr)
-- [✨ Feature Highlights](#-feature-highlights)
-- [🛠 Tech Stack & Versions](#-tech-stack--versions)
-- [📁 Project Structure](#-project-structure)
-- [⚙️ Configuration Files Overview](#️-configuration-files-overview)
-- [🐳 Infrastructure Setup (Docker)](#-infrastructure-setup-docker--do-this-first)
-- [🚀 Application Setup](#-application-setup)
-- [🌐 Environment Variables Reference](#-environment-variables-reference)
-- [🖥️ IDE Setup Notes](#️-ide-setup-notes)
-- [🔐 Vault — Important Notes](#-vault--important-notes)
-- [🔍 Running & Exploring Features](#-running--exploring-features)
-- [📡 API Reference](#-api-reference)
-- [📊 Observability Endpoints](#-observability-endpoints)
-- [🐋 Building a Container Image (Jib)](#-building-a-container-image-jib)
-- [🩺 Troubleshooting](#-troubleshooting)
-- [📝 Notes for Contributors](#-notes-for-contributors)
+- [⚡ Quick Start](#quick-start)
+- [✨ Feature Highlights](#feature-highlights)
+- [🛠 Tech Stack & Versions](#tech-stack-versions)
+- [📁 Project Structure](#project-structure)
+- [⚙️ Configuration Files Overview](#configuration-files-overview)
+- [🐳 Infrastructure Setup (Docker)](#infrastructure-setup-docker-do-this-first)
+- [🚀 Application Setup](#application-setup)
+- [🌐 Environment Variables Reference](#environment-variables-reference)
+- [🖥️ IDE Setup Notes](#ide-setup-notes)
+- [🔐 Vault — Important Notes](#vault-important-notes)
+- [🔍 Running & Exploring Features](#running-exploring-features)
+- [📡 API Reference](#api-reference)
+- [📊 Observability Endpoints](#observability-endpoints)
+- [🐋 Building & Running a Container Image](#building-running-a-container-image)
+- [🩺 Troubleshooting](#troubleshooting)
+- [📝 Notes for Contributors](#notes-for-contributors)
 
 ---
 
-## ⚡ Quick Start (TL;DR)
-
-For someone who wants to be up and running in under 5 minutes:
+## ⚡ Quick Start
 
 **Prerequisites: Java 21+, Maven 3.9+, Docker & Docker Compose**
+
+> **Windows users:** Before doing anything else, ensure `setup-vault.sh` uses LF line endings (not CRLF). See CRLF errors in [Troubleshooting](#troubleshooting).
 
 ---
 
 ### **1. Clone and Navigate**
-**cd Project**
+
+```bash
+cd demo-observability-app
+```
 
 ### **2. Start Infrastructure**
+
 Start Redis and HashiCorp Vault in detached mode.
-**`docker compose up -d`**
+
+```bash
+docker compose up -d
+```
 
 ### **3. Verify Vault Initialization**
-Wait ~10 seconds for the setup script to finish.
-**`docker logs vault-init`**  
-> *Look for: "DONE. Vault is unsealed and provisioned."*
 
-### **4. Configure Environment Variables**
-To run via Maven or IDE, you must set **VAULT_URI**, **VAULT_ROLE_ID**, and **VAULT_SECRET_ID**.
+Wait ~10 seconds for the setup script to finish, then check:
 
-#### **For IntelliJ Users**
-IntelliJ supports the included `.env` file natively. No further action is required.
+```bash
+docker logs vault-init
+```
 
-#### **For Eclipse or CMD/Terminal Users**
-Eclipse does not support `.env` files natively. Use the script below to persist variables to the Windows Registry (User Scope).
+> Look for the final line: **`DONE. Vault is unsealed and provisioned.`**
 
-**PowerShell Persistence Script:**
-**`Get-Content .env | Foreach-Object { $name, $value = $_.split('='); [System.Environment]::SetEnvironmentVariable($name, $value) };`**
+### **4. Set Environment Variables**
 
-*Note: If you close powershell window after running this command then it will refresh the environment & above variables will be removed.
-Either run the project in the same window or set these variables permanently, prefer to set these in User environment not to make changes to the whole systems
-effecting other users also.*
+The `.env` file at the project root contains the required Vault credentials with their default values:
 
-#### **Verification**
-To verify the variables are set in a new CMD instance:
-**`set VAULT`**
+```properties
+SPRING_CLOUD_VAULT_URI=http://localhost:8200
+SPRING_CLOUD_VAULT_ROLE_NAME=springboot-role
+SPRING_CLOUD_VAULT_ROLE_ID=demo-app-role-id
+SPRING_CLOUD_VAULT_SECRET_ID=demo-app-secret-id
+```
+
+**IntelliJ:** Loads `.env` natively — no action required. Simply point the run configuration at the project root.
+
+**Eclipse:** Does not natively support `.env` files. See [Eclipse setup](#eclipse-ide) for options.
+
+**CMD / PowerShell (for `mvn spring-boot:run`):** Run the following to load the `.env` into your current session:
+
+```powershell
+# PowerShell — current session only
+Get-Content .env | ForEach-Object {
+    $name, $value = $_ -split '=', 2
+    [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+}
+```
+
+To **persist** the variables across sessions (written to the Windows Registry, User scope):
+
+```powershell
+# PowerShell — persists to User environment (survives terminal restarts)
+Get-Content .env | ForEach-Object {
+    $name, $value = $_ -split '=', 2
+    [System.Environment]::SetEnvironmentVariable($name, $value, 'User')
+}
+```
+
+> After setting `'User'` scope, open a **new** terminal for the variables to take effect. Verify with: `[System.Environment]::GetEnvironmentVariable('SPRING_CLOUD_VAULT_URI', 'User')`
 
 ### **5. Run the Application**
-**`mvn spring-boot:run`**
+
+```bash
+mvn spring-boot:run
+```
 
 ### **6. Explore the Ecosystem**
-Access the following local endpoints once the application is active:
 
-*   **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
-*   **H2 Console:** [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-    *   **JDBC URL:** `jdbc:h2:mem:demo` | **User:** `sa`
-*   **Togglz Console:** [http://localhost:8080/togglz-console](http://localhost:8080/togglz-console)
-*   **Vault UI:** [http://localhost:8200/ui](http://localhost:8200/ui)
+Once the application is running, access these endpoints:
+
+|       Tool         |          URL         |  
+|--------------------|----------------------|  
+| **Swagger UI**     | [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) |  
+| **H2 Console**     | [http://localhost:8080/h2-console](http://localhost:8080/h2-console) — JDBC: `jdbc:h2:mem:demo`, User: `sa` |  
+| **Togglz Console** | [http://localhost:8080/togglz-console](http://localhost:8080/togglz-console) |  
+| **Vault UI**       | [http://localhost:8200/ui](http://localhost:8200/ui) — Token in `docker logs vault-init` |  
 
 ---
 
@@ -120,7 +154,7 @@ Access the following local endpoints once the application is active:
 Two distinct scheduling behaviours are demonstrated side-by-side in `ScheduledPrint`:
 
 | Task | Annotation | Behaviour |  
-|---|---|---|  
+|------|------------|-----------|  
 | `printMessage` | `@Scheduled(fixedDelay=5s)` | Next run starts **5 s after** the previous one **finishes** (sequential) |  
 | `printMessage2` | `@Scheduled(fixedRate=5s)` | Fires every **5 s from start**, regardless of completion (can overlap) |  
 
@@ -137,7 +171,7 @@ Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay con
 ### 🌐 Spring MVC — Comprehensive Annotation Coverage
 
 | Annotation | Demonstrated In |  
-|---|---|  
+|---------------|-------------------------|  
 | `@PathVariable` | `/api/public/cached/{id}`, `/api/public/users/{id}` |  
 | `@RequestParam` | `/api/public/search`, `/api/products/by-category` |  
 | `@RequestHeader` | `/api/public/user-agent` |  
@@ -151,7 +185,7 @@ Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay con
 
 **Problem Details (RFC 9457)** — `spring.mvc.problemdetails.enabled=true` converts exceptions into the standard `application/problem+json` response format.
 
-### 🫘 Bean Lifecycle & DI Patterns
+### 🍐 Bean Lifecycle & DI Patterns
 - **Singleton vs. Prototype scope** — `Scope1` compared live via `ApplicationContext.getBean()`
 - **`@Qualifier`** — Disambiguating multiple `MultiAutowiredBean` and `First` candidates
 - **Constructor injection** (preferred) vs. field injection (shown for contrast)
@@ -174,7 +208,8 @@ Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay con
 - **Global Exception Handler** — `@RestControllerAdvice` in `GlobalExceptionHandler`
 
 ### 🩺 Custom Startup Failure Analyzer
-`PlaceholderFailureAnalyzer` extends `AbstractFailureAnalyzer<PlaceholderResolutionException>`. When a `${placeholder}` cannot be resolved at startup (e.g., a missing Vault secret), instead of a raw stack trace, Spring Boot prints a human-readable diagnostic with the exact placeholder name and actionable advice. Registered via `META-INF/spring.factories`:
+`PlaceholderFailureAnalyzer` extends `AbstractFailureAnalyzer<PlaceholderResolutionException>`. When a `${placeholder}` cannot be resolved at startup (e.g., a missing Vault secret), instead of a raw stack trace, Spring Boot prints a human-readable diagnostic with the exact placeholder name and actionable advice.  
+Registered via `META-INF/spring.factories`:  
 ```properties
 org.springframework.boot.diagnostics.FailureAnalyzer=\
   com.applicationPOC.startUpFailureAnalyzer.PlaceholderFailureAnalyzer
@@ -209,7 +244,7 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 ## 🛠 Tech Stack & Versions
 
 | Layer | Technology | Version |  
-|---|---|---|  
+|-------|------------|---------|  
 | Framework | Spring Boot | **4.0.3** |  
 | Cloud | Spring Cloud (Vault, Retry) | **2025.1.1** |  
 | Language | Java | **21** |  
@@ -220,7 +255,7 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 | Database | H2 (in-memory) | — |  
 | Migrations | Liquibase | — |  
 | Async / Scheduling | Spring `@Async`, `@Scheduled` | — |  
-| Observability | Spring Actuator + Micrometer + Prometheus | Springdoc **3.0.2** |  
+| Observability | Spring Actuator + Micrometer + Prometheus | — |  
 | API Docs | SpringDoc OpenAPI (Swagger UI) | **3.0.2** |  
 | AOP | Spring AOP (AspectJ proxy) | — |  
 | Templates | Thymeleaf | — |  
@@ -233,24 +268,28 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 ## 📁 Project Structure
 
 ```
-Project/
+demo-observability-app/
 ├── pom.xml                          # Maven build — all dependencies and plugins
-├── application.properties           # Core Spring config (active profile = dev, H2, Liquibase, logging)
-├── application.yml                  # Spring Cloud Vault config + Docker Compose lifecycle
-├── docker-compose.yml               # Infrastructure: Redis + Vault + vault-init
-├── setup-vault.sh                   # Vault bootstrap script (init, unseal, AppRole, seed) — must use LF endings
-├── User.properties                  # External user properties (loaded via @ConfigurationProperties)
-├── ValidationMessages.properties    # Custom Bean Validation error messages
-├── META-INF/
-│   └── spring.factories             # Registers PlaceholderFailureAnalyzer for startup diagnostics
+├── .env                             # Vault credentials for local dev (IntelliJ/Maven)
+├── docker-compose.yml               # Infrastructure only: Redis + Vault + vault-init
+├── docker-compose-all.yml           # Full stack: infra + app container (build & run everything)
+├── Dockerfile                       # Multi-stage build: Maven → JLink runtime → layered app
+├── setup-vault.sh                   # Vault bootstrap: init, unseal, AppRole, seed — must use LF endings
+├── layers.xml                       # Spring Boot Layertools config for optimal Docker layer caching
+├── src/main/resources/
+│   ├── application.properties       # Core Spring config (active profile, H2, Liquibase, Actuator)
+│   ├── application.yml              # Spring Cloud Vault connection + Docker Compose lifecycle
+│   ├── user.properties              # External user properties (loaded via @ConfigurationProperties)
+│   ├── ValidationMessages.properties # Custom Bean Validation error messages
+│   └── META-INF/
+│       └── spring.factories         # Registers PlaceholderFailureAnalyzer for startup diagnostics
 ├── vault/
-│   ├── .env                         # Vault environment defaults for Docker
 │   ├── config/
-│   │   ├── vault-config.hcl         # Vault server HCL config (file storage backend)
+│   │   ├── vault-config.hcl         # Vault server HCL config (file storage backend, TCP 8200)
 │   │   └── keys.txt                 # ⚠ Generated at runtime — DO NOT commit
 │   └── data/                        # ⚠ Vault file storage — consider moving outside project
-└── java/com/applicationPOC/
-    ├── DemoObservabilityAppApplication.java    # Main class — enables Caching, Async, AOP, Scheduling, etc.
+└── src/main/java/com/applicationPOC/
+    ├── DemoObservabilityAppApplication.java    # Main class — enables Caching, Async, AOP, Scheduling
     ├── RandomComponent.java
     ├── aspects/                     # AOP — @Around (return modification), @Before (arg logging)
     ├── config/
@@ -275,7 +314,7 @@ Project/
     ├── event/                       # UserCreatedEvent (ApplicationEvent subclass)
     ├── eventListeners/              # UserEventListener — async handler
     ├── metrics/                     # CustomMetricsConfig (Micrometer counter)
-    ├── model/                       # User, UserDto, Scope1, First, Second, MultiAutowiredBean, ...
+    ├── model/                       # User, UserDto, Scope1, First, Second, MultiAutowiredBean...
     ├── repository/                  # JPA repositories (User, Product, Category, BasicUser)
     ├── scheduledJobs/
     │   ├── ScheduledPrint.java      # fixedDelay vs fixedRate demo
@@ -298,6 +337,13 @@ Project/
         └── TogglzConfigurations.java  # Redis-backed StateRepository for Togglz
 ```
 
+### Docker Compose Files — Which One to Use?
+
+| File | Purpose | When to Use |  
+|------|---------|-------------|  
+| `docker-compose.yml` | Infrastructure only (Redis + Vault) | **Recommended for development.** Run infra once, restart the Spring app freely via Maven/IDE. |  
+| `docker-compose-all.yml` | Full stack — infra + Spring app container | Use when you want to run the entire system as Docker containers (e.g., CI, integration testing, or demo). Requires `docker build` first. |  
+
 ---
 
 ## ⚙️ Configuration Files Overview
@@ -305,20 +351,21 @@ Project/
 Understanding which file controls what prevents confusion when tuning behaviour:
 
 | File | Loaded By | Controls |  
-|---|---|---|  
+|------|-----------|---------|  
 | `application.properties` | Spring Boot | Server port, active profile (`dev`), H2 datasource, Liquibase, Actuator exposure, Swagger paths, scheduling pool size, logging levels |  
 | `application.yml` | Spring Boot | Spring Cloud Vault connection (URI, AppRole credentials, KV-V2 path), Docker Compose lifecycle (`start_only`) |  
-| `User.properties` | `@ConfigurationProperties` | `user.min.role.length`, `user.max.role.length` (used by `@DynamicMin`) |  
+| `user.properties` | `@ConfigurationProperties` | `user.min.role.length`, `user.max.role.length` (used by `@DynamicMin`) |  
 | `ValidationMessages.properties` | Bean Validation | Custom constraint message templates |  
 | `vault/config/vault-config.hcl` | HashiCorp Vault | Vault server — storage backend (file), listener (TCP 8200), UI enabled |  
-| `vault/config/keys.txt` | `setup-vault.sh` | ⚠ Runtime-generated — unseal key + root token. Gitignore this. |  
+| `vault/config/keys.txt` | `setup-vault.sh` | ⚠ Runtime-generated — unseal key + root token. **Never commit.** |  
+| `.env` | IntelliJ / Maven `.env` loader | Vault credentials for local development (see [Environment Variables](#environment-variables-reference)) |  
 
 ### Active Profile
 
 The `dev` profile is active by default (`spring.profiles.active=dev` in `application.properties`). Key differences:
 
-| Behaviour | `dev` | `prod` |  
-|---|---|---|  
+| Behavior | `dev` | `prod` |  
+|-----------|-------|--------|  
 | CacheManager | Redis | ConcurrentMapCache |  
 | `devOnlyBean` | Created | Not created |  
 | H2 Console | Enabled | Should be disabled |  
@@ -329,7 +376,8 @@ To switch: change `spring.profiles.active=prod` in `application.properties` or p
 
 ## 🐳 Infrastructure Setup (Docker) — Do This First
 
-> **Why keep infra separate?** Redis and Vault can run independently of application restarts. Vault especially must not be re-initialised on every restart — doing so requires re-unsealing and re-generating credentials.
+> **Why keep infra separate?**  
+Redis and Vault can run independently of application restarts. Vault especially must not be re-initialised on every restart — doing so requires re-unsealing and re-generating credentials.
 
 ### Step 1 — Start the infrastructure
 
@@ -340,7 +388,7 @@ docker compose up -d
 This starts three services:
 
 | Service | Image | Port | Purpose |  
-|---|---|---|---|  
+|---------|-------|------|---------|  
 | `redis` | `redis:8.4.2-alpine3.22` | `6379` | Cache + Togglz state store |  
 | `vault-prod` | `hashicorp/vault:1.15` | `8200` | Secret management |  
 | `vault-init` | `hashicorp/vault:1.15` | — | One-shot: init, unseal, AppRole, seed |  
@@ -354,9 +402,9 @@ docker logs vault-init
 Wait for the final line: `DONE. Vault is unsealed and provisioned.`
 
 What `setup-vault.sh` does automatically:
-1. Cleans old `keys.txt` and `vault/data/`
+1. Detects if this is a fresh or existing Vault container (via cluster ID comparison)
 2. Initialises Vault (1 key share, threshold 1) → writes `vault/config/keys.txt`
-3. Unseals Vault
+3. Unseals Vault using the generated key
 4. Enables AppRole auth; creates policy + role (`springboot-role`)
 5. Sets deterministic `role-id = demo-app-role-id` and `secret-id = demo-app-secret-id`
 6. Enables KV-V2 at `secret/` and seeds `secret/demo-observability-app` with `secret.key = "secret value"`
@@ -394,61 +442,75 @@ docker compose up -d --force-recreate vault vault-init
 - **Maven 3.9+** (`mvn -version`)
 - **Docker & Docker Compose** (`docker compose version`)
 
-### Step 1 — Set environment variables
+### Step 1 — Understand the Environment Variables
 
-| Variable | Description | Default (setup-vault.sh) |  
-|---|---|---|  
-| `VAULT_URI` | Vault server URL | `http://localhost:8200` |  
-| `VAULT_ROLE_ID` | AppRole Role ID | `demo-app-role-id` |  
-| `VAULT_SECRET_ID` | AppRole Secret ID | `demo-app-secret-id` |  
-| `VAULT_ROLE_NAME` | AppRole name | `springboot-role` |  
+The application reads Vault credentials via Spring Cloud's standard environment variable mapping:
 
-### Step 2 — Build and run
+| Environment Variable | Spring Property | Description | Default Value |  
+|---------------------|----------------|-------------|---------------|  
+| `SPRING_CLOUD_VAULT_URI` | `spring.cloud.vault.uri` | Vault server URL | `http://localhost:8200` |  
+| `SPRING_CLOUD_VAULT_ROLE_ID` | `spring.cloud.vault.app-role.role-id` | AppRole Role ID | `demo-app-role-id` |  
+| `SPRING_CLOUD_VAULT_SECRET_ID` | `spring.cloud.vault.app-role.secret-id` | AppRole Secret ID | `demo-app-secret-id` |  
+| `SPRING_CLOUD_VAULT_ROLE_NAME` | `spring.cloud.vault.app-role.role-name` | AppRole name | `springboot-role` |  
+
+These are already set to their correct defaults in the `.env` file provided. You only need to change them if your Vault configuration differs.
+
+> **Note — two variable naming styles:** Spring Cloud Vault reads the official `SPRING_CLOUD_VAULT_*` form directly. The `.env` file and `docker-compose-all.yml` both use this form. If you see `VAULT_URI` mentioned anywhere (e.g., in older run scripts), that refers to a custom `${VAULT_URI}` substitution in `application.yml` — the `SPRING_CLOUD_VAULT_*` form in `.env` is the authoritative one to use.
+
+### Step 2 — Build and Run
 
 ```bash
-# Build (skip tests for speed) to create .jar file
+# Build (skip tests for speed)
 mvn clean package -DskipTests
 
-# Run via Maven
-VAULT_URI=http://localhost:8200 \
-VAULT_ROLE_ID=demo-app-role-id \
-VAULT_SECRET_ID=demo-app-secret-id \
+# Run via Maven (infra must already be up)
 mvn spring-boot:run
 
 # Or run the JAR directly
-VAULT_URI=http://localhost:8200 \
-VAULT_ROLE_ID=demo-app-role-id \
-VAULT_SECRET_ID=demo-app-secret-id \
 java -jar target/demo-observability-app-1.0.0.jar
 ```
 
-### Step 3 — Build and create docker image
-**mvn compile jib:dockerBuild**  
-Note: This requires a Docker daemon running on your machine to host the image.  
-Else use : **mvn compile jib:buildTar**  
-Note: This will create a target/jib-image.tar file that you can move or inspect.  
-
 The application starts on **`http://localhost:8080`**.
 
-> **Spring Boot Docker Compose auto-start:** The `spring-boot-docker-compose` dependency means Spring will automatically run `docker compose up` when you start the app — if the containers aren't already running. With `lifecycle-management: start_only`, Spring will *not* stop them when the app exits, keeping your Vault state intact.
+> **Spring Boot Docker Compose auto-start:** The `spring-boot-docker-compose` dependency means Spring will automatically run `docker compose up` when you start the app — if the containers aren't already running. With `lifecycle-management: start_only`, Spring will *not* stop them when the app exits, keeping your Vault state intact. This is a safety net, not a substitute for doing `docker compose up -d` manually first.
+
+### Step 3 — Build and Create a Docker Image (Optional)
+
+```bash
+# Build image to local Docker daemon (Jib — no Dockerfile needed)
+mvn compile jib:dockerBuild
+
+# Or export as a portable tar file (no Docker daemon needed)
+mvn compile jib:buildTar
+# → creates target/jib-image.tar; load with: docker load -i target/jib-image.tar
+
+# Full multi-stage Docker build (uses the Dockerfile — builds optimised JLink runtime)
+docker build -t demo-observability-app:v1 .
+```
+
+See [Building & Running a Container Image](#building-running-a-container-image) for the full container workflow.
 
 ---
 
 ## 🌐 Environment Variables Reference
 
+These are the variables the application reads at startup. The `.env` file provides the correct defaults for local development.
+
 ```properties
-# Required — Vault connection
-VAULT_URI=http://localhost:8200
-VAULT_ROLE_ID=demo-app-role-id
-VAULT_SECRET_ID=demo-app-secret-id
-VAULT_ROLE_NAME=springboot-role       # optional — defaults to springboot-role
+# Spring Cloud Vault — Required for app startup
+SPRING_CLOUD_VAULT_URI=http://localhost:8200
+SPRING_CLOUD_VAULT_ROLE_ID=demo-app-role-id
+SPRING_CLOUD_VAULT_SECRET_ID=demo-app-secret-id
+SPRING_CLOUD_VAULT_ROLE_NAME=springboot-role
 
 # Optional overrides (defaults shown)
-# spring.data.redis.host=localhost
-# spring.data.redis.port=6379
-# server.port=8080
-# spring.profiles.active=dev
+# SPRING_DATA_REDIS_HOST=localhost
+# SPRING_DATA_REDIS_PORT=6379
+# SERVER_PORT=8080
+# SPRING_PROFILES_ACTIVE=dev
 ```
+
+> When running the app as a Docker container (via `docker-compose-all.yml`), use `http://vault:8200` for the URI — not `http://localhost:8200` — since containers communicate over the internal `app-network`, not the host loopback.
 
 ---
 
@@ -458,34 +520,43 @@ VAULT_ROLE_NAME=springboot-role       # optional — defaults to springboot-role
 
 1. Open the project root as a Maven project
 2. Go to **Run → Edit Configurations** → select (or create) a Spring Boot run config
-3. Under **Environment variables**, click the folder icon and add:
-   - `VAULT_URI` → `http://localhost:8200`
-   - `VAULT_ROLE_ID` → `demo-app-role-id`
-   - `VAULT_SECRET_ID` → `demo-app-secret-id`
-4. Alternatively, create a `.env` file and use the [EnvFile plugin](https://plugins.jetbrains.com/plugin/7861-envfile) to load it automatically
+3. Under **EnvFile** (if you have the EnvFile plugin), point to `.env` in the project root — all variables are loaded automatically
+4. Alternatively, under **Environment variables**, click the folder icon and add each variable manually:
+   - `SPRING_CLOUD_VAULT_URI` → `http://localhost:8200`
+   - `SPRING_CLOUD_VAULT_ROLE_ID` → `demo-app-role-id`
+   - `SPRING_CLOUD_VAULT_SECRET_ID` → `demo-app-secret-id`
+   - `SPRING_CLOUD_VAULT_ROLE_NAME` → `springboot-role`
 
 ### Eclipse IDE
 
 Eclipse does **not** natively support `.env` files in run configurations.
 
-**Option A — Plugin:** Install *EnvFile* or *Spring Tools 4* which adds `.env` file support to the Run Configuration dialog.
+**Option A — Plugin:** Install [Spring Tools 4](https://spring.io/tools) or the [EnvFile plugin](https://marketplace.eclipse.org/), which adds `.env` file support to the Run Configuration dialog.
 
 **Option B — Manual:**
 1. Open **Run → Run Configurations…**
 2. Select your Spring Boot application
 3. Go to the **Environment** tab
-4. Add each variable (`VAULT_URI`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`, `VAULT_ROLE_NAME`) manually
+4. Add each variable manually:
+
+| Name | Value |  
+|------|-------|  
+| `SPRING_CLOUD_VAULT_URI` | `http://localhost:8200` |  
+| `SPRING_CLOUD_VAULT_ROLE_ID` | `demo-app-role-id` |  
+| `SPRING_CLOUD_VAULT_SECRET_ID` | `demo-app-secret-id` |  
+| `SPRING_CLOUD_VAULT_ROLE_NAME` | `springboot-role` |  
 
 ---
 
 ## 🔐 Vault — Important Notes
 
 | Concern | Detail |  
-|---|---|  
+|---------|--------|  
 | **`keys.txt`** | Generated by `vault-init` at `./vault/config/keys.txt`. Contains the unseal key and root token. **Add to `.gitignore`** — never commit. |  
-| **`vault/data/`** | Vault's file storage backend. Consider moving outside the project folder so Vault state survives project cleans. |  
-| **Recreating Vault** | Always delete `keys.txt` **and** `vault/data/` before recreating the container — otherwise the new container inherits the previous sealed state. |  
-| **Startup order** | Always start Docker Compose **before** the Spring Boot app. The app has `fail-fast: true` and will exit immediately if Vault is unreachable. Spring Retry will attempt   up to 10 connections (4 s apart). |
+| **`vault/data/`** | Vault's file storage backend. Consider moving outside the project folder so Vault state survives project cleans. **Add to `.gitignore`** — never commit. |  
+| **Container change detection** | The Vault container automatically detects if it is a new instance (by comparing its hostname to a stored cluster ID). If a new container is detected, it wipes stale data and re-initialises cleanly. You do not need to manually delete `vault/data/` between normal restarts. |  
+| **Recreating Vault** | If you *force* a fresh init (e.g., after deleting `keys.txt` manually), also delete `vault/data/` to avoid a stale-sealed-state conflict. |  
+| **Startup order** | Always start Docker Compose **before** the Spring Boot app. The app has `fail-fast: true` and will exit immediately if Vault is unreachable. Spring Retry will attempt up to 10 connections (4 s apart). |  
 | **Token TTL** | AppRole tokens expire in **1 h** (max 4 h). For long dev sessions ensure Vault is still running. |  
 | **`setup-vault.sh` line endings** | Must use **LF** (Unix) line endings — not CRLF. If cloned on Windows, run `dos2unix setup-vault.sh` or configure Git's `core.autocrlf=false`. |  
 
@@ -572,7 +643,7 @@ Periodic task running only after application started...   ← DynamicScheduler
 ### Public Endpoints (`/api/public/**`) — No authentication required
 
 | Method | Path | Feature Demonstrated |  
-|---|---|---|  
+|--------|------|---------------------|  
 | `GET` | `/api/public/ping` | Health check |  
 | `GET` | `/api/public/cached/{id}` | `@Cacheable` + `@PathVariable` |  
 | `GET` | `/api/public/search?keyword=&page=` | `@RequestParam` |  
@@ -596,13 +667,13 @@ Periodic task running only after application started...   ← DynamicScheduler
 ### Auth Endpoints
 
 | Method | Path | Description |  
-|---|---|---|  
+|--------|------|-------------|  
 | `POST` | `/auth/login` | Authenticate → receive JWT |  
 
 ### Secure Endpoints (`/api/secure/**`) — JWT required
 
 | Method | Path | Role Required |  
-|---|---|---|  
+|--------|------|---------------|  
 | `GET` | `/api/secure/me` | Any authenticated user |  
 | `GET` | `/api/secure/common` | Any authenticated user |  
 | `GET` | `/api/secure/user` | `ROLE_USER` |  
@@ -613,7 +684,7 @@ Periodic task running only after application started...   ← DynamicScheduler
 ### Product Endpoints (`/api/products/**`) — JWT required
 
 | Method | Path | Feature |  
-|---|---|---|  
+|--------|------|---------|  
 | `GET` | `/api/products/{id}` | HATEOAS `EntityModel` |  
 | `GET` | `/api/products/by-category?category=` | Paginated + HATEOAS |  
 | `GET` | `/api/products/search?q=` | JPA search with pagination |  
@@ -624,7 +695,7 @@ Periodic task running only after application started...   ← DynamicScheduler
 ### Vault Endpoints (`/vault/**`)
 
 | Method | Path | Auth | Description |  
-|---|---|---|---|  
+|--------|------|------|-------------|  
 | `GET` | `/vault/secret` | None | Read `secret.key` injected from Vault at startup |  
 | `GET` | `/vault/secrets` | None | List all secrets for the app path |  
 | `GET` | `/vault/secretByKey?key=` | None | Read a specific secret key |  
@@ -633,7 +704,7 @@ Periodic task running only after application started...   ← DynamicScheduler
 ### Binder Endpoint (`/api/binder/**`) — JWT + `ROLE_USER`
 
 | Method | Path | Feature |  
-|---|---|---|  
+|--------|------|---------|  
 | `POST` | `/api/binder/register` | `@InitBinder` + `StringTrimmerEditor` auto-trims whitespace |  
 
 ---
@@ -641,7 +712,7 @@ Periodic task running only after application started...   ← DynamicScheduler
 ## 📊 Observability Endpoints
 
 | Endpoint | Access | Description |  
-|---|---|---|  
+|----------|--------|-------------|  
 | `/actuator/health` | Public | App + dependency health (shows DB, Redis, Vault status) |  
 | `/actuator/info` | Public | App name & version (from `info.*` properties) |  
 | `/actuator/metrics` | `ROLE_ADMIN` | All registered Micrometer metrics |  
@@ -653,19 +724,23 @@ Periodic task running only after application started...   ← DynamicScheduler
 
 ---
 
-## 🐋 Building a Container Image (Jib)
+## 🐋 Building & Running a Container Image
 
-The project includes the **Google Jib Maven Plugin** (v3.4.3), which builds and pushes a container image **without requiring a local Docker daemon**.
+### Option A — Jib (No Dockerfile, No Docker daemon required for push)
 
 ```bash
-# Build and push to Docker Hub
+# Build to local Docker daemon
+mvn compile jib:dockerBuild
+
+# Build and push to Docker Hub (no local daemon needed)
 mvn jib:build \
   -Djib.to.image=YOUR_DOCKER_HUB_USERNAME/demo-observability-app \
   -Djib.to.auth.username=YOUR_DOCKER_HUB_USERNAME \
   -Djib.to.auth.password=YOUR_DOCKER_HUB_TOKEN
 
-# Build to local Docker daemon (requires Docker)
-mvn jib:dockerBuild
+# Export as a portable tar (useful in CI without Docker)
+mvn compile jib:buildTar
+docker load -i target/jib-image.tar
 ```
 
 **Image defaults** (configured in `pom.xml`):
@@ -674,7 +749,57 @@ mvn jib:dockerBuild
 - JVM flags: `-Xms256m -Xmx512m`
 - Tags: `latest` + `1.0.0`
 
-> Update `<image>YOUR_DOCKER_HUB_USERNAME/demo-observability-app</image>` in `pom.xml` with your actual Docker Hub username before pushing.
+> Update `<image>YOUR_DOCKER_HUB_USERNAME/demo-observability-app</image>` in `pom.xml` with your Docker Hub username before pushing.
+
+### Option B — Multi-stage Dockerfile (Custom JLink runtime, optimized size)
+
+```bash
+# Build image from the root of the project (where Dockerfile lives)
+docker build -t demo-observability-app:v1 .
+```
+
+The Dockerfile uses 4 stages:
+1. **maven-builder** — Compiles and packages the app (handles Windows CRLF in mvnw)
+2. **jvm-builder** — Builds a minimal custom JVM using `jlink` (~40–100 MB vs ~500 MB full JDK)
+3. **app-extractor** — Extracts the layered JAR for optimal Docker layer caching
+4. **Final image** — Alpine + custom JVM + layered app + non-root user (`spring:spring`)
+
+### Running the Container (standalone)
+
+```bash
+docker run -d \
+  --name observability-svc \
+  --cpus="2.0" \
+  --memory="1024m" \
+  --memory-reservation="512m" \
+  -p 8080:8080 \
+  -e SPRING_CLOUD_VAULT_URI=http://host.docker.internal:8200 \
+  -e SPRING_CLOUD_VAULT_ROLE_ID=demo-app-role-id \
+  -e SPRING_CLOUD_VAULT_SECRET_ID=demo-app-secret-id \
+  -e SPRING_CLOUD_VAULT_ROLE_NAME=springboot-role \
+  -e SPRING_DATA_REDIS_HOST=host.docker.internal \
+  demo-observability-app:v1
+```
+
+> Use `host.docker.internal` to reach services running on your host machine from inside the container (works on Docker Desktop for Mac/Windows; on Linux, use `--add-host=host.docker.internal:host-gateway`).
+
+### Option C — Full Stack with docker-compose-all.yml
+
+Runs infra + app together as a single Docker Compose stack. The app container is built from the Dockerfile automatically.
+
+```bash
+# Build the app image first (required on first run)
+docker build -t demo-observability-app:v1 .
+
+# Start everything
+docker compose -f docker-compose-all.yml up -d
+
+# Check logs
+docker compose -f docker-compose-all.yml logs -f app
+
+# Tear down
+docker compose -f docker-compose-all.yml down
+```
 
 ---
 
@@ -684,33 +809,93 @@ mvn jib:dockerBuild
 
 - Ensure Docker Compose is running: `docker compose ps`
 - Ensure Vault is healthy: `docker logs vault-init` — look for `DONE. Vault is unsealed and provisioned.`
-- Check `VAULT_URI`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID` are set correctly in your environment
+- Check your environment variables are set. From the terminal you're running Maven in:
+
+```
+  # Linux/macOS
+  echo $SPRING_CLOUD_VAULT_URI
+
+  # PowerShell
+  echo $env:SPRING_CLOUD_VAULT_URI
+```
+
+- If blank, re-run the `.env` loading PowerShell command from Quick Start Step 4.
 
 ### `PlaceholderResolutionException: Could not resolve placeholder '${secret.key}'`
 
-- The custom `PlaceholderFailureAnalyzer` will print a readable message with the exact placeholder name
-- Root cause: Vault is running but the secret path `secret/demo-observability-app` is missing or `secret.key` was not seeded
-- Fix: Run `docker logs vault-init` to confirm seeding completed; or manually: `docker exec -it vault-prod vault kv get secret/demo-observability-app`
+The custom `PlaceholderFailureAnalyzer` will print a readable message with the exact placeholder name.
+
+Root cause: Vault is running but the secret path `secret/demo-observability-app` is missing or `secret.key` was not seeded.
+
+```bash
+# Check if seeding completed
+docker logs vault-init
+
+# Manually verify the secret exists in Vault
+docker exec -it vault-prod vault kv get secret/demo-observability-app
+```
+
+If missing, the Vault init script did not complete. Try recreating:
+```bash
+docker compose up -d --force-recreate vault-init
+docker logs -f vault-init
+```
 
 ### Redis connection refused on startup
 
-- Check Redis is running: `docker compose ps redis`
-- Restart if needed: `docker compose restart redis`
+```bash
+docker compose ps redis          # Check if redis is running
+docker compose restart redis     # Restart if needed
+docker exec -it redis redis-cli ping  # Should reply PONG
+```
 
 ### Vault sealed after host restart
 
-- Vault does not auto-unseal after a Docker restart
-- Fix: `docker compose restart vault` followed by `docker compose restart vault-init` (or run `docker exec -it vault-prod vault operator unseal <key>` from `vault/config/keys.txt`)
+Vault does not auto-unseal after a Docker restart. The `vault-init` service handles re-unsealing automatically — just restart it:
+
+```bash
+docker compose restart vault vault-init
+docker logs -f vault-init        # Wait for: DONE. Vault is unsealed and provisioned.
+```
+
+Or unseal manually using the key from `vault/config/keys.txt`:
+```bash
+UNSEAL_KEY=$(grep "Unseal Key 1" vault/config/keys.txt | awk '{print $NF}')
+docker exec -it vault-prod vault operator unseal "$UNSEAL_KEY"
+```
 
 ### `setup-vault.sh` permission denied or CRLF errors
 
-- Ensure LF line endings: `file setup-vault.sh` should say "ASCII text" not "CRLF"
-- Fix on Windows: `dos2unix setup-vault.sh` or set `git config core.autocrlf false`
+This is the most common Windows gotcha. The script must use LF line endings to run inside a Linux container.
+
+```bash
+# Check line endings
+file setup-vault.sh
+# Should say: "ASCII text"  (not "CRLF line terminators")
+
+# Fix with dos2unix
+dos2unix setup-vault.sh
+
+# Or using sed
+sed -i 's/\r$//' setup-vault.sh
+
+# Prevent future issues in Git
+git config core.autocrlf false
+```
+
+### Environment variables not picked up after setting them
+
+If you set variables with `'User'` scope in PowerShell and the app still can't see them:
+- Open a **new** terminal — User-scope variables only apply to new processes
+- Verify: `[System.Environment]::GetEnvironmentVariable('SPRING_CLOUD_VAULT_URI', 'User')`
+- In IntelliJ, **restart the IDE** after changing system environment variables; it caches the environment at launch
 
 ### Togglz console shows no features / all disabled
 
-- Feature state is in Redis. If Redis was wiped, all flags revert to default (disabled)
-- Re-enable via the Togglz console at `http://localhost:8080/togglz-console`
+Feature state is in Redis. If Redis was wiped, all flags revert to default (disabled). Re-enable via the Togglz console:
+```
+http://localhost:8080/togglz-console
+```
 
 ### JWT token expired or 403 on secure endpoints
 
@@ -719,18 +904,31 @@ mvn jib:dockerBuild
 
 ### H2 console shows empty tables
 
-- Liquibase runs on startup. If it failed (check startup logs), tables may be missing
-- Run `docker logs vault-init` to rule out Vault issues (Vault must be ready before Spring Boot finishes loading context)
+Liquibase runs on startup. If it failed (check startup logs for `LiquibaseException`), tables may be missing. Common root cause: Vault wasn't ready, so the Spring context failed to load before Liquibase ran.
+
+1. Confirm Vault is up and provisioned
+2. Restart the Spring application — Liquibase will re-run on the fresh in-memory H2 instance
+
+### Spring Boot auto-starts Docker Compose but Vault gets re-initialised
+
+This happens if `spring.docker.compose.lifecycle-management` is not set to `start_only`. With `start_only`, Spring starts Docker Compose if it isn't running but **never stops it**. Vault is then not re-initialised across app restarts. Verify in `application.yml`:
+```yaml
+spring:
+  docker:
+    compose:
+      lifecycle-management: start_only
+```
 
 ---
 
 ## 📝 Notes for Contributors
 
-- **`vault/config/keys.txt`** and **`vault/data/`** are runtime-generated and should be in `.gitignore` — they are included in this repo for reference only
+- **`vault/config/keys.txt`** and **`vault/data/`** are runtime-generated and should be in `.gitignore`
 - When modifying `setup-vault.sh`, ensure it uses **LF line endings** (not CRLF) — it runs inside a Linux container
 - `spring.profiles.active=dev` is set in `application.properties`; switch to `prod` for the production cache manager and to hide dev-only beans
 - `spring.docker.compose.lifecycle-management=start_only` prevents Spring from shutting down Docker Compose when the app stops — this is intentional so Vault remains unsealed and infrastructure keeps running across app restarts
 - `spring-boot-properties-migrator` is included to surface warnings when deprecated properties are used; remove it once all properties are migrated to current naming
+- Update `<image>YOUR_DOCKER_HUB_USERNAME/demo-observability-app</image>` in `pom.xml` before pushing images to Docker Hub
 
 ---
 

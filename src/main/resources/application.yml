@@ -5,7 +5,7 @@ spring:
       uri: ${SPRING_CLOUD_VAULT_URI:http://localhost:8200}
       connection-timeout: 5000
       read-timeout: 5000
-      fail-fast: true # This makes the app wait for Vault
+      fail-fast: true # Fail fast if Vault is not available at startup
       retry:
          enabled: true
          initial-intervalā: 4000
