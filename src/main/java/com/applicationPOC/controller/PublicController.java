@@ -36,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.applicationPOC.aspects.DemoAspectService;
 import com.applicationPOC.config.UserProperties;
 import com.applicationPOC.dummyBeans.DummyProcessor;
-import com.applicationPOC.dummyBeans.ParentDummy;
 import com.applicationPOC.event.UserCreatedEvent;
 import com.applicationPOC.model.First;
 import com.applicationPOC.model.FirstAutowiredBean;
@@ -44,7 +43,6 @@ import com.applicationPOC.model.MultiAutowiredBean;
 import com.applicationPOC.model.Scope1;
 import com.applicationPOC.model.UserDto;
 import com.applicationPOC.service.DemoService;
-import com.applicationPOC.service.FeatureService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -80,9 +78,6 @@ public class PublicController {
 
 	@Autowired
 	private DemoAspectService demoAspectService;
-
-	@Autowired
-	private FeatureService featureService;
 
 	@Autowired
 	private FirstAutowiredBean first;
@@ -323,18 +318,6 @@ public class PublicController {
 	@GetMapping("/user-properties")
 	public UserProperties getUserProperties() {
 		return userProperties;
-	}
-
-	@Operation(summary = "Check Feature endpoint", description = "Checks the availability of a feature based on the provided feature name, returns the availability status or an error message for invalid feature names"
-			+ " Use http://localhost:8080/togglz-console to enable/disable features and test this endpoint")
-	@GetMapping("/feature/{feature}")
-	public String checkFeature(@PathVariable String feature) {
-		return switch(feature) {
-		case "feature1" -> featureService.isFeature1Available();
-		case "feature2" -> featureService.isFeature2Available();
-		case "feature3" -> featureService.isFeature3Available();
-		default -> "Invalid feature name";
-		};
 	}
 
 }

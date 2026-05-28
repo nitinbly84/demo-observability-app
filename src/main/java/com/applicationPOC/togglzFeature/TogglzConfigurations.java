@@ -3,15 +3,11 @@ package com.applicationPOC.togglzFeature;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.togglz.core.Feature;
 import org.togglz.core.manager.FeatureManager;
 import org.togglz.core.manager.FeatureManagerBuilder;
 import org.togglz.core.manager.TogglzConfig;
 import org.togglz.core.repository.StateRepository;
-import org.togglz.core.user.FeatureUser;
-import org.togglz.core.user.SimpleFeatureUser;
 import org.togglz.core.user.UserProvider;
 import org.togglz.redis.RedisStateRepository;
 

@@ -106,7 +106,7 @@ public class SecurityConfig {
 	}
 
 	// CRITICAL FIX 2: Replace NoOpUserProvider with a Spring Security bridge
-	@Bean
+	//@Bean
 	UserProvider getUserProvider() {
 		return new UserProvider() {
 			@Override

@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Pattern;
 public class UserDto {
     private Long id;
     @NotNull
-    @Length(min = 7, max = 50, message = "{name.size.message}")
+    @Length(min = 5, max = 40, message = "{name.size.message}")
     @Pattern(regexp = "^[A-Za-z]([A-Za-z\\s]*[A-Za-z])?$", message = "{name.invalid.message}")
     private String name;
     @Email(message = "Invalid email format")
