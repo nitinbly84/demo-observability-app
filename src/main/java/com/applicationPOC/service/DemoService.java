@@ -81,7 +81,7 @@ public class DemoService {
 	@Async("virtualPoolTaskExecutor")
 	public CompletableFuture<String> asyncVirtualOperation(String input) {
 		System.out.println("Executing asyncVirtualOperation on " + Thread.currentThread().toString() 
-	            + " | Is Virtual Thread? " + Thread.currentThread().isVirtual());
+	            + " | Is Virtual Thread? " + Thread.currentThread().isVirtual() + ".....................................");
 	    try {
 	        // Virtual threads block efficiently on Thread.sleep without pinning the OS thread
 	        Thread.sleep(2000); 

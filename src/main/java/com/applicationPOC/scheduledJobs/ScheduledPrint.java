@@ -3,6 +3,8 @@ package com.applicationPOC.scheduledJobs;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Component;
 // which can lead to delays if tasks take longer than their scheduled intervals.
 @Component
 public class ScheduledPrint {
+	
+	private static final Logger log = LoggerFactory.getLogger(ScheduledPrint.class);
 
 	// This method will run every 5 seconds after an initial delay of 2 seconds
 	// fixedDelay means the next execution will start 5 seconds after the previous execution finishes
@@ -18,7 +22,7 @@ public class ScheduledPrint {
 	// effectively running every 10 seconds, as seen in the logs.
 	@Scheduled(initialDelay = 2l, fixedDelay = 5l, timeUnit = TimeUnit.SECONDS)
 	public void printMessage() {
-		System.out.println("Scheduled task executed at: " + LocalDateTime.now());
+		log.debug("Scheduled task executed at: " + LocalDateTime.now());
 		// Simulate a long-running task
 		try {
 			Thread.sleep(5000);
@@ -35,7 +39,7 @@ public class ScheduledPrint {
 	// which can lead to overlapping executions if the task takes longer than the fixed rate.
 	@Scheduled(fixedRate = 5l, timeUnit = TimeUnit.SECONDS)
 	public void printMessage2() {
-		System.out.println("Scheduled task2 executed at: " + LocalDateTime.now());
+		log.debug("Scheduled task2 executed at: " + LocalDateTime.now());
 		// Simulate a long-running task
 		try {
 			Thread.sleep(5000);

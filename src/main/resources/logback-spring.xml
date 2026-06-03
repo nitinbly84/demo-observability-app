@@ -2,6 +2,7 @@
 <configuration scan="true" scanPeriod="60 seconds">
 
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
     <springProfile name="dev">
         <property name="LOG_PATH" value="vault/logs" />
@@ -55,6 +56,8 @@
     <logger name="com.applicationPOC.controller.VaultController" level="${LOG_LEVEL_VAULT}" additivity="false">
         <appender-ref ref="VAULT_ASYNC"/>
     </logger>
+
+    <logger name="org.springframework.web.servlet.mvc.method.annotation" level="INFO" />
 
     <root level="${LOG_LEVEL_ROOT}">
         <appender-ref ref="CONSOLE"/>

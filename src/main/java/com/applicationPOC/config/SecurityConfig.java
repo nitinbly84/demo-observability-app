@@ -46,7 +46,7 @@ public class SecurityConfig {
 				.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/auth/login").permitAll()
 				.requestMatchers("/auth/login").permitAll()
 				.requestMatchers("/vault/*").permitAll()
-				.requestMatchers("/actuator/health", "/actuator/info").permitAll()
+				.requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
 				// Actuator & secure APIs require auth
 				.requestMatchers("/vault/manage/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").hasRole("ADMIN")

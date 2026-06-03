@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s # How often to poll the app for text metrics
+
+scrape_configs:
+  - job_name: 'spring-boot-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      # If running via Docker on Mac/Windows, use host.docker.internal to reach localhost
+      - targets: ['host.docker.internal:8080']
+        labels:
+              application: 'demo-observability-app'
