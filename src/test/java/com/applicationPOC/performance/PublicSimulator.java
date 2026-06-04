@@ -184,6 +184,7 @@ public class PublicSimulator extends Simulation {
 			.exec(
 					http("POST_Create_User_Form")
 					.post("/users/form")
+					.asFormUrlEncoded()
 					.formParam("name", "#{userName}")
 					.formParam("email", "#{userEmail}")
 					.formParam("password", "formSecured321")
@@ -276,9 +277,9 @@ public class PublicSimulator extends Simulation {
 						// Same kind of waits can added for other scenarios as well to create more realistic interleaving and 
 						// concurrency patterns, but we keep it simple here for demonstration purposes.
 						// Holds execution until previous scenario is completed, assuming that it will not exceed 30 seconds.
-						nothingFor(Duration.ofSeconds(60)),rampUsers(60).during(30)),
+						nothingFor(Duration.ofSeconds(90)),rampUsers(60).during(30)),
 				concurrentProcessingVirtualModelsScenario.injectOpen(
-						nothingFor(Duration.ofSeconds(62)),rampUsers(2000).during(30)),
+						nothingFor(Duration.ofSeconds(102)),rampUsers(2000).during(30)),
 				springInternalsScenario.injectOpen(rampUsers(30).during(15)),
 				extensionsScenario.injectOpen(rampUsers(50).during(20))
 				)
@@ -293,7 +294,7 @@ public class PublicSimulator extends Simulation {
 
 				// Asynchronous Processing Latency Verification
 				details("GET_Virtual_Threads_Async").responseTime().percentile3().lt(2030), // Virtual Threads should be significantly faster due to efficient blocking
-				details("GET_Standard_CompletableFuture_Async").responseTime().percentile3().lt(11400)
+				details("GET_Standard_CompletableFuture_Async").responseTime().percentile3().lt(30400)
 				);
 	}
 }

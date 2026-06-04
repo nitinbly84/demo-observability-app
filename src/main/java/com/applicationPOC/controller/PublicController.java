@@ -217,8 +217,9 @@ public class PublicController {
 	@PostMapping("/users/form")
 	public UserDto createUserFromForm(@Valid @ModelAttribute UserDto user) {
 		int nextInt = new Random().nextInt(1, 10);
-		if(nextInt <= 4)
-			throw new IllegalArgumentException("Throwing Random Exception from controller...");
+		// Randomly throwing exception to test GlobalExceptionHandler, you can call this endpoint multiple times to see the effect
+//		if(nextInt <= 4)
+//			throw new IllegalArgumentException("Throwing Random Exception from controller...");
 		return demoService.saveUser(user);
 	}
 

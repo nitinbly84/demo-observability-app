@@ -21,6 +21,9 @@ A comprehensive **Spring Boot proof-of-concept** application that demonstrates a
 - [🔍 Running & Exploring Features](#running-exploring-features)
 - [📡 API Reference](#api-reference)
 - [📊 Observability Endpoints](#observability-endpoints)
+- [📈 Prometheus & Grafana](#prometheus-grafana)
+- [🧪 Testing](#testing)
+- [⚡ Performance Testing — Gatling](#performance-testing-gatling)
 - [🐋 Building & Running a Container Image](#building-running-a-container-image)
 - [🩺 Troubleshooting](#troubleshooting)
 - [📝 Notes for Contributors](#notes-for-contributors)
@@ -144,6 +147,8 @@ Once the application is running, access these endpoints:
 - Three runtime-toggleable flags: `IS_FEATURE1_ENABLED`, `IS_FEATURE2_ENABLED`, `IS_FEATURE3_ENABLED`
 - **Togglz Admin Console** at `/togglz-console` to flip flags without redeployment
 - Feature state persisted in Redis; survives application restarts
+- **`SpringSecurityUserProvider`** — integrates Togglz with Spring Security; `ROLE_ADMIN` users are treated as feature admins (can manage flags via the console); all other authenticated users are regular users subject to activation strategy rules; anonymous requests are handled gracefully
+- **`FeatureController`** at `/featurerApi/feature/{feature}` — dedicated REST endpoint that exposes feature-flag status for features 1–9 via a switch expression; distinct from the public convenience endpoint at `/api/public/feature/{feature}`
 
 ### ⚙️ Spring AOP
 - **`@Around` Advice** — Intercepts `DemoAspectService.serviceMethod()` and appends `[Modified by Aspect]` to the return value
@@ -166,7 +171,8 @@ Both tasks simulate work with `Thread.sleep(5000)`, making the overlap/delay con
 - `@EnableAsync` on the main application class enables async support
 - **Default Spring thread pool** — `asyncOperation` endpoint
 - **Custom `ThreadPoolTaskExecutor`** (`transcodingPoolTaskExecutor`, core=2, max=2, queue=500) — `asyncCustomOperation` endpoint
-- Both endpoints exposed for direct side-by-side comparison
+- **Virtual Threads** (`virtualPoolTaskExecutor`, backed by `Executors.newVirtualThreadPerTaskExecutor()`) — `asyncVirtualOperation` endpoint; demonstrates Java 21 virtual threads side-by-side with platform threads
+- All three endpoints exposed for direct side-by-side comparison
 
 ### 🌐 Spring MVC — Comprehensive Annotation Coverage
 
@@ -237,6 +243,8 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 - **Thymeleaf** — Multi-step user registration form (`user-step1.html` → `user-step2.html` → `user-complete.html`)
 - **`@Value` with defaults** — `${demo.name:Default Name}` pattern
 - **Swagger / OpenAPI** — UI at `/swagger-ui.html`, spec at `/v3/api-docs`
+- **OpenAPI Security Configuration** — `OpenAPISecurityConfiguration` registers a `Bearer Authentication` security scheme so the Swagger UI displays an **Authorize** button; JWT tokens obtained from `POST /auth/login` can be pasted there to authenticate all secured endpoints directly in the browser
+- **`OpenApiCleanUpConfig`** and **`SwaggerUiCssFilter`** — post-process the generated spec and apply UI styling tweaks for a cleaner developer experience
 - **Spring Boot Docker Compose integration** — `spring-boot-docker-compose` dependency auto-starts Docker Compose services on application launch (lifecycle set to `start_only` so infra keeps running when the app stops)
 
 ---
@@ -256,7 +264,7 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 | Migrations | Liquibase | — |  
 | Async / Scheduling | Spring `@Async`, `@Scheduled` | — |  
 | Observability | Spring Actuator + Micrometer + Prometheus | — |  
-| API Docs | SpringDoc OpenAPI (Swagger UI) | **3.0.2** |  
+| API Docs | SpringDoc OpenAPI (Swagger UI) | **2.8.5** |  
 | AOP | Spring AOP (AspectJ proxy) | — |  
 | Templates | Thymeleaf | — |  
 | Infrastructure | Docker Compose | — |  
@@ -311,10 +319,15 @@ demo-observability-app/
     │   └── UserFormController.java  # Thymeleaf multi-step form
     ├── customAnnotation/            # @TrimmedLength, @DynamicMin + their validators
     ├── domain/                      # Product, Category, ProductModelAssembler (HATEOAS)
+    ├── dummyBeans/                  # DummyBean1, DummyBean2, DummyProcessor, ParentDummy — runtime bean resolution demo
     ├── event/                       # UserCreatedEvent (ApplicationEvent subclass)
     ├── eventListeners/              # UserEventListener — async handler
     ├── metrics/                     # CustomMetricsConfig (Micrometer counter)
     ├── model/                       # User, UserDto, Scope1, First, Second, MultiAutowiredBean...
+    ├── openAPI/
+    │   ├── OpenAPISecurityConfiguration.java  # Registers Bearer JWT scheme for Swagger Authorize button
+    │   ├── OpenApiCleanUpConfig.java           # Post-processes generated OpenAPI spec
+    │   └── SwaggerUiCssFilter.java             # Applies UI styling tweaks to Swagger UI
     ├── repository/                  # JPA repositories (User, Product, Category, BasicUser)
     ├── scheduledJobs/
     │   ├── ScheduledPrint.java      # fixedDelay vs fixedRate demo
@@ -334,6 +347,8 @@ demo-observability-app/
     │   └── PlaceholderFailureAnalyzer.java  # Custom FailureAnalyzer for missing ${placeholders}
     └── togglzFeature/
         ├── Features.java            # Enum: IS_FEATURE1_ENABLED, IS_FEATURE2_ENABLED, IS_FEATURE3_ENABLED
+        ├── FeatureController.java   # REST endpoint at /featurerApi/feature/{feature} (features 1–9)
+        ├── SpringSecurityUserProvider.java  # Bridges Togglz UserProvider with Spring Security context
         └── TogglzConfigurations.java  # Redis-backed StateRepository for Togglz
 ```
 
@@ -655,13 +670,18 @@ Periodic task running only after application started...   ← DynamicScheduler
 | `POST` | `/api/public/users/form` | `@ModelAttribute` + Global Exception Handler |  
 | `GET` | `/api/public/async/{input}` | `@Async` (default pool) |  
 | `GET` | `/api/public/custom-async/{input}` | `@Async` (custom `transcodingPoolTaskExecutor`) |  
+| `GET` | `/api/public/virtual-async/{input}` | `@Async` (virtual threads via `virtualPoolTaskExecutor`) |  
 | `GET` | `/api/public/message` | Prototype scope + SpEL |  
 | `GET` | `/api/public/scope` | Singleton scope |  
 | `GET` | `/api/public/aspect-value/{name}` | AOP `@Around` (return value modification) |  
 | `GET` | `/api/public/hash/{password}` | BCrypt hash generator |  
 | `GET` | `/api/public/conditional-first` | `@ConditionalOnProperty` |  
 | `GET` | `/api/public/user-properties` | `@ConfigurationProperties` |  
-| `GET` | `/api/public/feature/{feature}` | Togglz feature flag check |  
+| `GET` | `/api/public/feature/{feature}` | Togglz feature flag check (convenience alias) |  
+| `GET` | `/api/public/default-user` | Returns a hardcoded default user object |  
+| `GET` | `/api/public/first` | `@Qualifier` — resolves `FirstAutowiredBean` |  
+| `GET` | `/api/public/multi` | `@Qualifier` — resolves `MultiAutowiredBean` |  
+| `GET` | `/api/public/autowired/{beanName}` | Dynamic bean resolution by name (`dummyBean1` / `dummyBean2`) via `ApplicationContext.getBean()` |  
 | `GET` | `/api/public/name` | `@Value` with default |  
 
 ### Auth Endpoints
@@ -707,6 +727,12 @@ Periodic task running only after application started...   ← DynamicScheduler
 |--------|------|---------|  
 | `POST` | `/api/binder/register` | `@InitBinder` + `StringTrimmerEditor` auto-trims whitespace |  
 
+### Feature API (`/featurerApi/**`) — No authentication required
+
+| Method | Path | Description |  
+|--------|------|-------------|  
+| `GET` | `/featurerApi/feature/{feature}` | Check availability of a named feature flag (`feature1`–`feature9`); returns status string or `"Invalid feature name"` for unknown names. Toggle flags at `/togglz-console` to see live changes. |  
+
 ---
 
 ## 📊 Observability Endpoints
@@ -721,6 +747,129 @@ Periodic task running only after application started...   ← DynamicScheduler
 | `/v3/api-docs` | Public | OpenAPI JSON spec |  
 | `/h2-console` | Public | H2 in-memory DB console |  
 | `/togglz-console` | Public (dev) | Feature flag management |  
+
+---
+
+## 📈 Prometheus & Grafana
+
+The `docker-compose.yml` includes Prometheus and Grafana services alongside the application infrastructure.
+
+| Service | Image | Port | Purpose |  
+|---------|-------|------|---------|  
+| `prometheus` | `prom/prometheus:latest` | `9090` | Scrapes `/actuator/prometheus` every 15 s; stores time-series metrics |  
+| `grafana` | `grafana/grafana:latest` | `3000` | Visualises Prometheus data; default admin password: `admin` |  
+
+### Connecting Grafana to Prometheus
+
+1. Open Grafana at [http://localhost:3000](http://localhost:3000) and log in (`admin` / `admin`).
+2. Go to **Connections → Data Sources → Add data source → Prometheus**.
+3. Set the URL to `http://prometheus:9090` (container-to-container; both share the default bridge network).
+4. Click **Save & Test** — you should see "Data source is working".
+
+### `prometheus.yml`
+
+The scrape configuration at the project root points Prometheus at the Spring Boot app:
+
+```yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'spring-boot-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          application: 'demo-observability-app'
+```
+
+> `host.docker.internal` is used so the Prometheus container can reach the app running on your host. On Linux, add `--add-host=host.docker.internal:host-gateway` to the Prometheus container definition or replace the target with your host's IP.
+
+The custom `demo.custom.requests` counter registered via `CustomMetricsConfig` appears in Grafana as soon as the `/actuator/prometheus` endpoint is scraped.
+
+---
+
+## 🧪 Testing
+
+The project includes unit and integration tests under `src/test/java/com/applicationPOC/`:
+
+### Test Classes
+
+| Class | Type | What It Covers |  
+|-------|------|----------------|  
+| `PublicControllerTest` | Unit (standalone MockMvc, no Spring context) | Every endpoint and every branch in `PublicController` — happy paths, validation errors, `@RequestAttribute` fallback, cookie set/read, async dispatch pattern for `CompletableFuture`, `MockedConstruction` for deterministic `Random` branching |  
+| `DemoServiceTest` | Integration (slice with `@EnableCaching` + `@EnableAsync`) | `@Cacheable` correctness (miss vs hit via log assertion), all three `@Async` variants (default pool, custom `transcodingPoolTaskExecutor`, virtual threads), `saveUser` persistence + event publishing, `getUserById` found/not-found |  
+| `FeatureServiceTest` | Integration (slice with in-memory Togglz state) | All three feature flags — enabled/disabled states, cross-feature isolation, all-enabled scenario |  
+| `DemoObservabilityAppApplicationTests` | Smoke (full Spring context load) | Verifies the application context starts successfully with all beans wired |  
+
+### Running Tests
+
+```bash
+# Run all tests
+mvn test
+
+# Run a specific class
+mvn test -Dtest=PublicControllerTest
+
+# Run with coverage (if JaCoCo is configured)
+mvn verify
+```
+
+### Design Highlights
+
+- **No Spring context in `PublicControllerTest`** — the controller is instantiated manually and all dependencies are injected via `ReflectionTestUtils`, keeping each test well under 1 second.
+- **`MockedConstruction`** intercepts `new Random()` inside `createUserFromForm` so both the exception-throwing branch (random ≤ 4) and the success branch (random > 4) are deterministically reachable without flakiness.
+- **Two-step async dispatch** (`andExpect(request().asyncStarted())` → `asyncDispatch(mvcResult)`) is used for all `CompletableFuture`-returning endpoints.
+- **`DemoServiceTest`** verifies virtual thread identity at runtime: `assertThat(thread.isVirtual()).isTrue()`.
+
+---
+
+## ⚡ Performance Testing — Gatling
+
+The project ships three Gatling simulations under `src/test/java/com/applicationPOC/performance/`. They are written with the Gatling Java DSL (version **3.11.5**) and run via the `gatling-maven-plugin` (**4.9.2**).
+
+### Simulations
+
+| Simulation | Target | Load Profile | SLA Assertions |  
+|------------|--------|--------------|----------------|  
+| `PublicSimulator` | All public endpoints (`/api/public/**`) | 11 concurrent scenarios; up to 2 000 virtual users ramped over 30 s for the virtual-threads scenario | Cache hit p95 < 20 ms; cache miss p95 > 100 ms; virtual-threads async p95 < 2 030 ms; 0% failed requests |  
+| `FeatureToggleSimulation` | `/featurerApi/feature/{feature}` | Anonymous + authenticated personas; constant load at configurable RPS for configurable duration | Global p95 < 50 ms; global max < 250 ms; 0% failed requests |  
+| `AuthenticatedFeatureToggleSimulation` | Feature toggle endpoints with JWT/Basic auth | Ramps authenticated users with pre-seeded credentials | Configured per simulation |  
+
+### Running a Simulation
+
+```bash
+# Run the default simulation (edit pom.xml simulationClass to switch)
+mvn gatling:test
+
+# Run a specific simulation
+mvn gatling:test -Dgatling.simulationClass=com.applicationPOC.performance.PublicSimulator
+
+# Override load parameters (FeatureToggleSimulation supports these)
+mvn gatling:test \
+  -Dgatling.simulationClass=com.applicationPOC.performance.FeatureToggleSimulation \
+  -DbaseUrl=http://localhost:8080 \
+  -DtargetRps=200 \
+  -DdurationSec=120
+```
+
+> The application must be running (`mvn spring-boot:run`) before launching a simulation.
+
+### Reports
+
+Gatling generates an HTML report after each run at `target/gatling/<simulation-name>-<timestamp>/index.html`. Open it in a browser to see response-time percentiles, throughput, and per-request statistics.
+
+### `PublicSimulator` — Scenarios at a Glance
+
+| Scenario | Injected Users | Key Assertion |  
+|----------|---------------|---------------|  
+| Ping | 200 over 10 s | 200 OK + body contains `"pong"` |  
+| Cache validation (miss → hit) | 500 over 25 s | Cache hit p95 < 20 ms |  
+| Search with params | 30 over 15 s | JSON fields validated |  
+| Stateful cookie lifecycle | 35 over 15 s | `Set-Cookie` header exists; second request reads cookie |  
+| User lifecycle (create → fetch) | 40 over 20 s | 201 Created; GET returns same email |  
+| Async processing (default + custom pool) | 60 over 30 s (starts at 60 s) | 200 OK; body contains `"Processed:"` |  
+| Virtual Threads async | 2 000 over 30 s (starts at 62 s) | p95 < 2 030 ms |  
 
 ---
 
