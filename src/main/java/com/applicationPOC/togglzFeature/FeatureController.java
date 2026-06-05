@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.applicationPOC.service.FeatureService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "FeatureController", description = "Feature APIs to check the status of individual features.") // Swagger/OpenAPI annotation to group APIs under a tag with description
 @RestController
 @RequestMapping("/featurerApi")
 public class FeatureController {

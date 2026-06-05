@@ -1,5 +1,7 @@
 package com.applicationPOC;
 
+import java.lang.management.ManagementFactory;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -30,6 +32,22 @@ import com.applicationPOC.config.UserProperties;
 public class DemoObservabilityAppApplication {
 
 	public static void main(String[] args) {
+		// DIAGNOSTIC CHECK: Ensure the JVM process has the necessary classes for Actuator's heap dump and diagnostics features.
+		try {
+            // Check for the class that Actuator requires
+            Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
+            System.out.println(">>> [DIAGNOSTIC] SUCCESS: HotSpotDiagnosticMXBean is present in this IDE JVM process.");
+            
+            // Print the runtime name to ensure it's a JDK/HotSpot VM
+            String vmName = ManagementFactory.getRuntimeMXBean().getVmName();
+            System.out.println(">>> [DIAGNOSTIC] Running on VM: " + vmName);
+        } catch (ClassNotFoundException e) {
+            System.err.println(">>> [DIAGNOSTIC] CRITICAL: HotSpotDiagnosticMXBean is missing!");
+            System.err.println(">>> [DIAGNOSTIC] Your IDE is launching the application using a JRE instead of a JDK.");
+            System.err.println(">>> [DIAGNOSTIC] Current Java Home: " + System.getProperty("java.home"));
+        }
+		
+		// Start the Spring Boot application
 		SpringApplication.run(DemoObservabilityAppApplication.class, args);
 	}
 	

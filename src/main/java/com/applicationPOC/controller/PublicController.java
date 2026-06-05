@@ -148,6 +148,7 @@ public class PublicController {
 	// name in cookie is not required as param is same as cookie name, else name is needed
 	public String welcomeUser(@CookieValue(name = "username", required = false) String username,
 			HttpServletResponse response) {
+		System.out.println("Cookie got " + username + ".........................");
 
 		if (username == null) {
 			Cookie cookie = new Cookie("username", "demo-user");

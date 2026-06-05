@@ -1,5 +1,6 @@
 package com.applicationPOC.config;
 
+import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -47,6 +48,8 @@ public class SecurityConfig {
 				.requestMatchers("/auth/login").permitAll()
 				.requestMatchers("/vault/*").permitAll()
 				.requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus").permitAll()
+				// 3. SECURE ALL OTHER ACTUATOR ENDPOINTS (including heapdump, env, threaddump)
+		        .requestMatchers(EndpointRequest.toAnyEndpoint()).hasRole("ADMIN")
 				// Actuator & secure APIs require auth
 				.requestMatchers("/vault/manage/**").hasRole("ADMIN")
 				.requestMatchers("/actuator/**").hasRole("ADMIN")

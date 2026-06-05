@@ -8,25 +8,25 @@ A comprehensive **Spring Boot proof-of-concept** application that demonstrates a
 
 ## 📑 Table of Contents
 
-- [⚡ Quick Start](#quick-start)
-- [✨ Feature Highlights](#feature-highlights)
-- [🛠 Tech Stack & Versions](#tech-stack-versions)
-- [📁 Project Structure](#project-structure)
-- [⚙️ Configuration Files Overview](#configuration-files-overview)
-- [🐳 Infrastructure Setup (Docker)](#infrastructure-setup-docker-do-this-first)
-- [🚀 Application Setup](#application-setup)
-- [🌐 Environment Variables Reference](#environment-variables-reference)
-- [🖥️ IDE Setup Notes](#ide-setup-notes)
-- [🔐 Vault — Important Notes](#vault-important-notes)
-- [🔍 Running & Exploring Features](#running-exploring-features)
-- [📡 API Reference](#api-reference)
-- [📊 Observability Endpoints](#observability-endpoints)
-- [📈 Prometheus & Grafana](#prometheus-grafana)
-- [🧪 Testing](#testing)
-- [⚡ Performance Testing — Gatling](#performance-testing-gatling)
-- [🐋 Building & Running a Container Image](#building-running-a-container-image)
-- [🩺 Troubleshooting](#troubleshooting)
-- [📝 Notes for Contributors](#notes-for-contributors)
+- ⚡ [Quick Start](#quick-start)
+- ✨ [Feature Highlights](#feature-highlights)
+- 🛠 [Tech Stack & Versions](#tech-stack-versions)
+- 📁 [Project Structure](#project-structure)
+- ⚙️ [ Configuration Files Overview](#configuration-files-overview)
+- 🐳 [Infrastructure Setup (Docker)](#infrastructure-setup-docker-do-this-first)
+- 🚀 [Application Setup](#application-setup)
+- 🌐 [Environment Variables Reference](#environment-variables-reference)
+- 🖥️ [IDE Setup Notes](#ide-setup-notes)
+- 🔐 [Vault — Important Notes](#vault-important-notes)
+- 🔍 [Running & Exploring Features](#running-exploring-features)
+- 📡 [API Reference](#api-reference)
+- 📊 [Observability Endpoints](#observability-endpoints)
+- 📈 [Prometheus & Grafana](#prometheus-grafana)
+- 🧪 [Testing](#testing)
+- ⚡ [Performance Testing — Gatling](#performance-testing-gatling)
+- 🐋 [Building & Running a Container Image](#building-running-a-container-image)
+- 🩺 [Troubleshooting](#troubleshooting)
+- 📝 [Notes for Contributors](#notes-for-contributors)
 
 ---
 
@@ -253,7 +253,7 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 
 | Layer | Technology | Version |  
 |-------|------------|---------|  
-| Framework | Spring Boot | **4.0.3** |  
+| Framework | Spring Boot | **4.0.6** |  
 | Cloud | Spring Cloud (Vault, Retry) | **2025.1.1** |  
 | Language | Java | **21** |  
 | Security | Spring Security + JWT (jjwt) | jjwt **0.12.5** |  
@@ -279,6 +279,7 @@ org.springframework.boot.diagnostics.FailureAnalyzer=\
 demo-observability-app/
 ├── pom.xml                          # Maven build — all dependencies and plugins
 ├── .env                             # Vault credentials for local dev (IntelliJ/Maven)
+├── Commands.md                      # jdeps / jlink reference guide for building a custom JVM runtime
 ├── docker-compose.yml               # Infrastructure only: Redis + Vault + vault-init
 ├── docker-compose-all.yml           # Full stack: infra + app container (build & run everything)
 ├── Dockerfile                       # Multi-stage build: Maven → JLink runtime → layered app
@@ -323,7 +324,7 @@ demo-observability-app/
     ├── event/                       # UserCreatedEvent (ApplicationEvent subclass)
     ├── eventListeners/              # UserEventListener — async handler
     ├── metrics/                     # CustomMetricsConfig (Micrometer counter)
-    ├── model/                       # User, UserDto, Scope1, First, Second, MultiAutowiredBean...
+    ├── model/                       # User, UserDto, Scope1, First, Second, MultiAutowiredBean, Dependent...
     ├── openAPI/
     │   ├── OpenAPISecurityConfiguration.java  # Registers Bearer JWT scheme for Swagger Authorize button
     │   ├── OpenApiCleanUpConfig.java           # Post-processes generated OpenAPI spec
@@ -733,6 +734,8 @@ Periodic task running only after application started...   ← DynamicScheduler
 |--------|------|-------------|  
 | `GET` | `/featurerApi/feature/{feature}` | Check availability of a named feature flag (`feature1`–`feature9`); returns status string or `"Invalid feature name"` for unknown names. Toggle flags at `/togglz-console` to see live changes. |  
 
+> **Note:** `FeatureController` lives in the `togglzFeature` package, which is outside `springdoc.packages-to-scan=com.applicationPOC.controller`. It does **not** appear in Swagger UI. Use the endpoint directly via Postman or `curl`.  
+
 ---
 
 ## 📊 Observability Endpoints
@@ -798,6 +801,7 @@ The project includes unit and integration tests under `src/test/java/com/applica
 | Class | Type | What It Covers |  
 |-------|------|----------------|  
 | `PublicControllerTest` | Unit (standalone MockMvc, no Spring context) | Every endpoint and every branch in `PublicController` — happy paths, validation errors, `@RequestAttribute` fallback, cookie set/read, async dispatch pattern for `CompletableFuture`, `MockedConstruction` for deterministic `Random` branching |  
+| `FeatureControllerTest` | Unit (standalone MockMvc, no Spring context) | All 9 valid feature names route to the correct `FeatureService` method; both toggle states (available / not available) for feature1; `default` switch branch returns `"Invalid feature name"` for unknown, out-of-range, and numeric names |  
 | `DemoServiceTest` | Integration (slice with `@EnableCaching` + `@EnableAsync`) | `@Cacheable` correctness (miss vs hit via log assertion), all three `@Async` variants (default pool, custom `transcodingPoolTaskExecutor`, virtual threads), `saveUser` persistence + event publishing, `getUserById` found/not-found |  
 | `FeatureServiceTest` | Integration (slice with in-memory Togglz state) | All three feature flags — enabled/disabled states, cross-feature isolation, all-enabled scenario |  
 | `DemoObservabilityAppApplicationTests` | Smoke (full Spring context load) | Verifies the application context starts successfully with all beans wired |  
@@ -912,6 +916,8 @@ The Dockerfile uses 4 stages:
 2. **jvm-builder** — Builds a minimal custom JVM using `jlink` (~40–100 MB vs ~500 MB full JDK)
 3. **app-extractor** — Extracts the layered JAR for optimal Docker layer caching
 4. **Final image** — Alpine + custom JVM + layered app + non-root user (`spring:spring`)
+
+> **`Commands.md`** at the project root is a detailed reference guide for the `jdeps` / `jlink` workflow: how to analyse module dependencies, the exact `jlink` flags used in the Dockerfile, why each JDK module is included, and when to prefer a distroless base image over a custom runtime. Read it before modifying the `jlink` module list in the Dockerfile.
 
 ### Running the Container (standalone)
 
