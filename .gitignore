@@ -33,3 +33,4 @@ build/
 .vscode/
 /git_token_key
 /setup-vault_org.sh
+/springboot_prod.jfr

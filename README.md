@@ -12,7 +12,7 @@ A comprehensive **Spring Boot proof-of-concept** application that demonstrates a
 - ✨ [Feature Highlights](#feature-highlights)
 - 🛠 [Tech Stack & Versions](#tech-stack-versions)
 - 📁 [Project Structure](#project-structure)
-- ⚙️ [ Configuration Files Overview](#configuration-files-overview)
+- ⚙️ [Configuration Files Overview](#configuration-files-overview)
 - 🐳 [Infrastructure Setup (Docker)](#infrastructure-setup-docker-do-this-first)
 - 🚀 [Application Setup](#application-setup)
 - 🌐 [Environment Variables Reference](#environment-variables-reference)
