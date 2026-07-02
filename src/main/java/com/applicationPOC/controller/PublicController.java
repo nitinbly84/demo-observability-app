@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -57,7 +58,9 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/public")
 //Allows browser clients running at http://localhost:3000 (e.g. React app) to call these endpoints via AJAX.
 // else, browser will block due to CORS policy
-@CrossOrigin(origins = "http://localhost:3000") // @CrossOrigin demo
+//@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:7070"},
+//methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT},
+//allowedHeaders = {"Content-Type", "X-Test-Header"}) // @CrossOrigin demo
 public class PublicController {
 
 	// Injecting DemoService by declaring it as final and it will be injected via constructor, no need to use @Autowired on constructor

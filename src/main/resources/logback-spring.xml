@@ -3,6 +3,9 @@
 
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+    <!-- Import Spring Boot's default Logback config (console, file appenders) -->
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
 
     <springProfile name="dev">
         <property name="LOG_PATH" value="vault/logs" />
@@ -52,6 +55,13 @@
         <includeCallerData>true</includeCallerData>
         <neverBlock>false</neverBlock>
     </appender>
+    
+    <!-- OTel (OpenTelemetry) Logback Appender — forwards log events to OTel SDK -->
+    <!-- The SDK then exports them as OTLP logs to the configured endpoint      -->
+    <appender name="OTEL"
+      class="io.opentelemetry.instrumentation.logback.appender.v1_0.OpenTelemetryAppender">
+    </appender>
+
 
     <logger name="com.applicationPOC.controller.VaultController" level="${LOG_LEVEL_VAULT}" additivity="false">
         <appender-ref ref="VAULT_ASYNC"/>
@@ -61,6 +71,7 @@
 
     <root level="${LOG_LEVEL_ROOT}">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="OTEL"/>
     </root>
 
     <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>

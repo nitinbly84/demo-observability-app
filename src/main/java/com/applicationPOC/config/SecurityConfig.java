@@ -1,6 +1,8 @@
 package com.applicationPOC.config;
 
 
+import java.util.List;
+
 import org.springframework.boot.security.autoconfigure.actuate.web.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.togglz.core.user.FeatureUser;
 import org.togglz.core.user.SimpleFeatureUser;
 import org.togglz.core.user.UserProvider;
@@ -38,6 +43,7 @@ public class SecurityConfig {
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
+		.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 		.csrf(AbstractHttpConfigurer::disable)
 		.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 		.authorizeHttpRequests(auth -> auth
@@ -72,6 +78,22 @@ public class SecurityConfig {
 		//            .httpBasic(Customizer.withDefaults());
 
 		return http.build();
+	}
+	
+	// CRITICAL FIX 1: CORS configuration to allow requests from the Thymeleaf client running on port 7070
+	@Bean
+	CorsConfigurationSource corsConfigurationSource() {
+	    CorsConfiguration configuration = new CorsConfiguration();
+	    
+	    // Explicitly allow the Thymeleaf client origin running on 7070
+	    configuration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:7070"));
+	    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    configuration.setAllowedHeaders(List.of("Content-Type", "X-Test-Header"));
+	    configuration.setMaxAge(3600L);
+
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/api/public/**", configuration);
+	    return source;
 	}
 
 	/*

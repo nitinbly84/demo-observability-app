@@ -147,3 +147,9 @@ After the Build: The Run CommandOnce the build finishes, you can verify the imag
   ```
 Memory Optimization: The JVM will initialize at 512 MB and can grow up to 1 GB based on the -XX percentages set in the Dockerfile.  
 CPU Optimization: The 2 CPUs allow the ParallelGC we configured to handle the high-throughput requirements of your observability stack effectively.
+
+## To stop docker containers and remove their volumes from the system to free the memory
+```bash
+docker compose down
+docker volume prune -f
+```

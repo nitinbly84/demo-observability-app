@@ -2,10 +2,12 @@ package com.applicationPOC;
 
 import java.lang.management.ManagementFactory;
 
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -49,6 +51,14 @@ public class DemoObservabilityAppApplication {
 		
 		// Start the Spring Boot application
 		SpringApplication.run(DemoObservabilityAppApplication.class, args);
+	}
+	
+	@Bean
+	CommandLineRunner runOnStartup() {
+		return args -> {
+			System.out.println(">>> Any actions you want to perform right after the application starts can be placed here.");
+			System.out.println(">>> Application started successfully. Ready to serve requests.");
+		};
 	}
 	
 }

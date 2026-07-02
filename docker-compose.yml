@@ -82,14 +82,28 @@ services:
         - ./prometheus.yml:/etc/prometheus/prometheus.yml
       ports:
         - "9090:9090"
+      networks:
+        - app-network
   grafana:
       image: grafana/grafana:latest
       container_name: grafana
       ports:
-        - "3000:3000"
+        - "3000:3000" # Grafana UI
       environment:
         - GF_SECURITY_ADMIN_PASSWORD=admin
-
+      networks:
+        - app-network
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    volumes:
+      - ./src/main/resources/config.yml:/etc/otel/config.yml:ro
+    command: ["--config=/etc/otel/config.yml"]
+    ports:
+      - "4318:4318"   # OTLP HTTP — your app sends here
+      - "4317:4317"   # OTLP gRPC (optional)
+    networks:
+      - app-network
 volumes:
   redis-data:
   redis-insight-data:
